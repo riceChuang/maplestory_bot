@@ -1,0 +1,2 @@
+call main.exe
+pause
