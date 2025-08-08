@@ -12,6 +12,7 @@
     "attack_range_comment": "攻擊範圍設定值攻守:720左右，自己微調",
     "attack_range": 560,
     "attack_range": 300,
+    "attack_range": 720,
     "main_skill_keep_time_comment": "主要攻擊技能按壓時間",
     "main_skill_keep_time": 2,
     "is_find_monster_closer_comment": "是否尋找較近的怪物 1:是 0:否",
