@@ -4,15 +4,15 @@
     "is_climb_comment": "是否使用爬梯 1:是 ,0:否",
     "is_climb": 0,
     "game_map_comment": "填入要打的地圖",
-    "game_map": "寺院通道一",
+    "game_map": "黑肥肥領土",
     "role_speed_sec_px_comment": "角色每秒移動多少px",
     "role_speed_sec_px": 360,
     "main_attack_skill_comment": "主要攻擊技能",
     "main_attack_skill": "a",
     "attack_range_comment": "攻擊範圍設定值攻守:720左右，自己微調",
-    "attack_range": 200,
+    "attack_range": 300,
     "main_skill_keep_time_comment": "主要攻擊技能按壓時間",
-    "main_skill_keep_time": 1,
+    "main_skill_keep_time": 2,
     "is_find_monster_closer_comment": "是否尋找較近的怪物 1:是 0:否",
     "is_find_monster_closer": 1,
     "is_enemey_change_channel_comment": "是否有人就換頻 1:是 0:否",
@@ -29,7 +29,7 @@
     "main_flash_skill_comment": "主要法師閃現技能",
     "main_flash_skill": "f",
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
-    "is_use_flash_skill": 1,
+    "is_use_flash_skill": 0,
     "is_wizard_comment": "是否為法師 1:是 ,0:否",
-    "is_wizard": 1
+    "is_wizard": 0
 }
