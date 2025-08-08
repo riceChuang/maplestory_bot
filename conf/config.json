@@ -20,7 +20,7 @@
     "is_unseal_change_channell_comment": "是否出現解輪就換頻 1:是 0:否",
     "is_unseal_change_channel": 1,
     "is_unseal_try_comment": "是否嘗試解輪 1:是 0:否",
-    "is_unseal_try": 1,
+    "is_unseal_try": 0,
     "webhook_url_comment": "訊息通知到DC",
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
 

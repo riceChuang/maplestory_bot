@@ -272,21 +272,38 @@ def move_to_target(target_pos):
     print(f"👣 當前位置: {player_x}, 差距: {dx}")
 
     if abs(dx) > ATTACK_RANGE:
-        ## 單次flash距離
-        times = math.ceil(dx / 250)
-        direction = 'right' if dx > 0 else 'left'
-        for i in range(times):
-            if interruptEVent():
+        if IS_WIZARD == 1:
+            times = math.ceil(dx / 250)
+            direction = 'right' if dx > 0 else 'left'
+            for i in range(times):
+                if interruptEVent():
+                    pyautogui.keyUp(direction)
+                    pyautogui.keyUp(MAIN_FLASH_SKILL)
+                    return
+                pyautogui.keyDown(direction)
+                pyautogui.keyDown(MAIN_FLASH_SKILL)
+                if dy>60:
+                    pyautogui.press('space')
+                time.sleep(0.5)  
                 pyautogui.keyUp(direction)
                 pyautogui.keyUp(MAIN_FLASH_SKILL)
-                return
-            pyautogui.keyDown(direction)
-            pyautogui.keyDown(MAIN_FLASH_SKILL)
-            if dy>60:
-                pyautogui.press('space')
-            time.sleep(0.5)  
+        else:
+            times = 10
+            duration = min(3, abs(abs(dx)-ATTACK_RANGE) / ROLE_SPEED_SEC_PX)
+            timesSec = duration/times
+            direction = 'right' if dx > 0 else 'left'
+            for i in range(times):
+                if interruptEVent():
+                    pyautogui.keyUp(direction)
+                    return
+                pyautogui.keyDown(direction)
+                time.sleep(0.05)
+                if dy>60:
+                    pyautogui.press('space')
+                time.sleep(timesSec)  
+                
             pyautogui.keyUp(direction)
-            pyautogui.keyUp(MAIN_FLASH_SKILL)
+ 
             
         
     # 🧭 最後面向目標方向
@@ -450,11 +467,20 @@ def tryUnseal():
                     
             if not found:
                 print(f"❌ 未偵測到解輪圖示 (segment {i+1})，請確認模板圖與遊戲狀態")
+                NOTIFIER_MGR.send(f'❌ 未偵測到解輪圖示 (segment {i+1})，請確認模板圖與遊戲狀態')
                 return False
-        print("🔓 解輪完成，等待動畫結束...")    
-        return True
+        time.sleep(2)  # 等待解輪動畫開始
+        print("🔓 等待解輪動畫結束...")
+        if UNSEAL_MGR.check_usseal_window(all_unseal_templates):
+            print("❌ 解輪動畫未正確顯示，請確認遊戲狀態")
+            NOTIFIER_MGR.send('❌ 解輪動畫未正確顯示，請確認遊戲狀態')
+            return False
+        else:
+            print("🔓 解輪完成，等待動畫結束...")    
+            return True
     else:
         print("❌ 無法到達解輪位置")
+        NOTIFIER_MGR.send('❌ 無法到達解輪位置')
         return False
 
 
@@ -482,6 +508,7 @@ def move_to_unseal_position(all_unseal_templates, max_attempts, tolerance):
 
         if abs(dy) > 300:
             print("❌ Y 差距過大，無法精準到達目標")
+            NOTIFIER_MGR.send('❌ Y 差距過大，無法精準到達目標')
             return False
 
         # 判斷是否已經在容差範圍內
@@ -540,6 +567,7 @@ def changeState(STATE:State):
     elif (MINI_MAP_ENEMY_MGR.is_enemy_detected() and IS_ENEMY_CHANGE_CHANNEL==1):
         GAME_STATE = State.CHANGE_CHANNEL          
     elif MINI_MAP_ENEMY_MGR.is_stuck():
+        NOTIFIER_MGR.send('❗️ 偵測到黃點異常，卡住切換頻道')
         GAME_STATE = State.CHANGE_CHANNEL
     print(f'''[流程切換] GOTO -> {GAME_STATE} ''')
 # ---------- 主邏輯 ----------
@@ -556,6 +584,7 @@ def main():
                     loopAction()
                     changeState(State.ATTACK_ACTION)
                 else:
+                    print("🔍 尋找怪物...")
                     endState = attacAction()
                     if endState == 'move_up_or_down' and IS_CLIMB:
                         changeState(State.MOVE_UP_OR_DOWN)
@@ -638,6 +667,9 @@ if __name__ == "__main__":
     # 上下樓層控制
     FLOOR_MOVEMENT = LadderClimber(REGION, target_map[GAME_MAP],ROLE_SPEED_SEC_PX,interrupt_callback=interruptEVent)
     
+    # print config
+    print(f"設定: {setting}")
+
     # testloop()
     main()
 

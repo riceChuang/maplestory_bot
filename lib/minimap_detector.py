@@ -20,7 +20,7 @@ class MinimapEnemyDetector(threading.Thread):
         self._stuck_event = threading.Event()
         self._last_pos = None
         self._last_move_time = time.time()
-        self._stuck_timeout = 50  # 秒
+        self._stuck_timeout = 80  # 秒
         self._stuck_tolerance = 5  # px
         
     def switch_check_stuck(self):
@@ -32,6 +32,8 @@ class MinimapEnemyDetector(threading.Thread):
         return self._enemy_detected.is_set()
 
     def reset(self):
+        self._last_pos = None
+        self._last_move_time = time.time()
         self._enemy_detected.clear()
         self._stuck_event.clear()
 

@@ -21,12 +21,13 @@ class UnsealDetector:
         self._unseal_detected = threading.Event()
         self.running = False
         self.unseal_pos = None
-        self.send_discord = True  
+        self.send_discord = True
+        self.unseal_window = {"top": region['top']+350, "left": int(region['left']+region['width']/5), "width": int(region['width']/5*3), "height": 450}
         self.sgments = [
-    {"top": region['top'], "left": int(region['left']+region['width']/5), "width": int(region['width']/5*3/4), "height": region['height']},
-    {"top": region['top'], "left": int(region['left']+region['width']/5+region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": region['height']},
-    {"top": region['top'], "left": int(region['left']+region['width']/5+2*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": region['height']},
-    {"top": region['top'], "left": int(region['left']+region['width']/5+3*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": region['height']},
+    {"top": region['top']+350, "left": int(region['left']+region['width']/5), "width": int(region['width']/5*3/4), "height": 450},
+    {"top": region['top']+350, "left": int(region['left']+region['width']/5+region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": 450},
+    {"top": region['top']+350, "left": int(region['left']+region['width']/5+2*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": 450},
+    {"top": region['top']+350, "left": int(region['left']+region['width']/5+3*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": 450},
     ]
 
     def rigesterMgr(self,dc_notifier:DiscordNotifier):
@@ -56,9 +57,15 @@ class UnsealDetector:
         with mss.mss() as sct:
             img = np.array(sct.grab(self.region))
             return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+    
+    def _capture_window(self):
+        with mss.mss() as sct:
+            img = np.array(sct.grab(self.unseal_window))
+            cv2.imwrite("window.png", img)
+            return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
     def check_usseal_window(self, all_unseal_templates):
-        frame = self._capture_screen()
+        frame = self._capture_window()
         for _, template in enumerate(all_unseal_templates):
             res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
             _, max_val, _, _ = cv2.minMaxLoc(res)
