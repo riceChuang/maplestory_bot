@@ -10,7 +10,8 @@
     "main_attack_skill_comment": "主要攻擊技能",
     "main_attack_skill": "a",
     "attack_range_comment": "攻擊範圍設定值攻守:720左右，自己微調",
-    "attack_range": 150,
+    "attack_range": 560,
+    "attack_range": 300,
     "main_skill_keep_time_comment": "主要攻擊技能按壓時間",
     "main_skill_keep_time": 2,
     "is_find_monster_closer_comment": "是否尋找較近的怪物 1:是 0:否",
@@ -38,4 +39,7 @@
     "flash_move_px": 380,
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
     "is_use_flash_skill": 1
+    "is_use_flash_skill": 0,
+    "is_wizard_comment": "是否為法師 1:是 ,0:否",
+    "is_wizard": 0
 }
