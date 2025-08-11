@@ -101,18 +101,18 @@ def capture_screen(region):
 def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=THRESHOLD):
     folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
     best_candidate = None
-    best_score = 0
-    best_distance = float('inf')  # 初始距離設很大
     monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
     # 找玩家
     if player_pos is None:
         player_pos = find_player(REGION,monsterRegion,IS_USE_ROLE_PIC,SCENE_TEMPLATES)
+        
     if not player_pos:
         print("❌ 無法取得玩家位置，停止比對")
         return None
     player_x, player_y = player_pos
     print("============================",player_pos)
     # 模板比對
+    cv2.imwrite("monster.png", frame) 
     for template_path in glob.glob(os.path.join(folder_path, "*.png")):
         template = cv2.imread(template_path)
         if template is None:
@@ -124,12 +124,17 @@ def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=TH
             continue
 
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
+        # min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-        center_x = max_loc[0] + REGION['left'] + template.shape[1] // 2
-        center_y = max_loc[1] + REGION['top'] + template.shape[0] // 2
+        result = find_best_match_near_center(res, player_x, player_y, getMonsterToleranceY(target_map[GAME_MAP]), template)
+        if result is None:
+            print(f"❌ 未找到符合條件的匹配：{template_path}")
+            continue  # 沒有找到符合條件的匹配
+        center_x, center_y = result
+        # center_x = match_x + REGION['left'] + template.shape[1] // 2
+        # center_y = match_y + REGION['top'] + template.shape[0] // 2
 
-        print(f"🔍 {os.path.basename(template_path)} 匹配值 = {max_val:.3f} @ ({center_x}, {center_y}) player_y:{player_y}")
+        print(f"🔍 {os.path.basename(template_path)}  @ ({center_x}, {center_y}) player_y:{player_y}")
 
         # 判斷 Y 軸是否過遠
         y_tolerance = getMonsterToleranceY(target_map[GAME_MAP])
@@ -138,18 +143,15 @@ def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=TH
         if dy > y_tolerance:
             print(f"🟥 排除：Y 差值 {dy} 超出容忍範圍 {y_tolerance}")
             continue
-
-        # 判斷匹配值是否足夠
-        if max_val >= threshold:
-            dx = abs(center_x - player_x)
-            print(f"📏 水平差距 dx = {dx}")
-            if dx < best_distance :
-                # 找到更近的怪物（或匹配度更高）
-                best_candidate = (center_x, center_y)
-                best_score = max_val
-                best_distance = dx
-                if IS_FIND_MONSTER_CLOSER == 0:
-                    return best_candidate
+    
+        # 判斷匹配值是否足夠        
+        dx = abs(center_x - player_x)
+        print(f"📏 水平差距 dx = {dx}")
+        if dx < best_candidate[0] :
+            # 找到更近的怪物（或匹配度更高）
+            best_candidate = (center_x, center_y)
+            if IS_FIND_MONSTER_CLOSER == 0:
+                return best_candidate
 
     if best_candidate:
         print(f"✅ 最近且符合條件的怪物：{best_candidate}，匹配值：{best_score:.3f}")
@@ -158,6 +160,32 @@ def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=TH
         print("🟡 沒有符合門檻與距離條件的怪物")
         return None
 
+def find_best_match_near_center(res, center_x, center_y, y_tolerance, template, threshold=THRESHOLD):
+    # 找出所有匹配分數 >= threshold 的點 (y座標, x座標)
+    loc = np.where(res >= threshold)
+    points = list(zip(loc[1], loc[0]))  # (x, y)
+
+    if not points:
+        print("❌ 沒有找到符合條件的匹配點")
+        return None
+
+    # 過濾 y 座標與 center_y 差距超過 y_tolerance 的點
+    filtered_points = []
+    for pt in points:
+        print(f"pt y: {pt[1]}, center_y: {center_y}")
+        match_x = pt[0] + REGION['left'] + template.shape[1] // 2
+        match_y = pt[1] + REGION['top'] + template.shape[0] // 2
+        if abs(match_y - center_y) <= y_tolerance:
+            filtered_points.append((match_x, match_y))
+
+    if not filtered_points:
+        return None
+
+    # 找出 x 座標最接近 center_x 的點
+    best_point = min(filtered_points, key=lambda pt: abs(pt[0] - center_x))
+
+    match_x, match_y = best_point
+    return match_x, match_y
 
 def monster_still_exist_nearby(frame, target_pos, folder_path=MONSTERS_PATH, tolerance=LOCK_TOLERANCE):
     folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
@@ -360,7 +388,7 @@ def loopAction():
     while True:
         if interruptEVent():
             return
-        times = 12
+        times = 14
         direction = checkPlayerAtLeftOrRight()
         if direction is None:
             print("❌ 無法確定玩家方向，停止攻擊")
@@ -372,16 +400,26 @@ def loopAction():
                 pyautogui.keyUp(MAIN_FLASH_SKILL)
                 pyautogui.keyUp(MAIN_ATTACK_SKILL)
                 return
+            tempdirection = direction
+            if i % 5 == 0:
+                tempdirection = anotherDirection(direction)
+                
             print("========== 攻擊目標 =========")
             pyautogui.keyDown(MAIN_FLASH_SKILL)
-            pyautogui.keyDown(direction)
+            pyautogui.keyDown(tempdirection)
             time.sleep(0.2)  
-            pyautogui.keyUp(direction)
+            pyautogui.keyUp(tempdirection)
             pyautogui.keyUp(MAIN_FLASH_SKILL)
             time.sleep(0.8)
         pyautogui.keyUp(MAIN_ATTACK_SKILL)
         return
 
+def anotherDirection(direction):
+    if direction == 'left':
+        return 'right'
+    elif direction == 'right':
+        return 'left'
+    
 
 def checkPlayerAtLeftOrRight():
     '''檢查玩家往哪邊移動'''
