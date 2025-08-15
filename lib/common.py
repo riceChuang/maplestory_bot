@@ -128,6 +128,7 @@ def findPicExist(region, folder_path, threshold=0.6, mode="default", target_x: i
             return None
 
         matches = []
+        offset_y = 365
 
         for tpl_path in templates:
             template = cv2.imread(tpl_path)
@@ -135,29 +136,21 @@ def findPicExist(region, folder_path, threshold=0.6, mode="default", target_x: i
                 print(f"❌ 無法讀取模板圖：{tpl_path}")
                 continue
 
-            if mode == "precise":
-                result = cv2.matchTemplate(screenshot, template, cv2.TM_SQDIFF_NORMED)
-                min_val, _, min_loc, _ = cv2.minMaxLoc(result)
-                match_val = min_val
-                match_loc = min_loc
-                print(f"🔍 (精準) {tpl_path} 差異度：{match_val:.4f} @ {match_loc}")
-            else:
-                result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, max_loc = cv2.minMaxLoc(result)
-                match_val = max_val
-                match_loc = max_loc
-                print(f"🔍 {tpl_path} 匹配度：{match_val:.4f} @ {match_loc}")
+            
+            result = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
+            # 找出所有大於等於 threshold 的位置（匹配越大越好）
+            loc = np.where(result >= threshold)
 
-            center_x = match_loc[0] + region['left'] + template.shape[1] // 2
-            center_y = match_loc[1] + region['top'] + template.shape[0] // 2
-            offset_y = 230
-            if max_y is not None and not (center_y < max_y and center_y >= max_y - offset_y):
-                print(f"⏭️ 排除 {tpl_path}：中心 Y={center_y} 不在 {max_y - offset_y} ~ {max_y} 之間")
-                continue
+            # 將所有符合條件的位置依序處理
+            for pt in zip(*loc[::-1]):  # (x, y)
+                center_x = pt[0] + region['left'] + template.shape[1] // 2
+                center_y = pt[1] + region['top'] + template.shape[0] // 2
 
-            if (mode == "precise" and match_val <= threshold) or \
-            (mode == "default" and match_val >= threshold):
-                matches.append(((center_x, center_y), match_val))
+                if max_y and (max_y - offset_y <= center_y < max_y):
+                    match_val = result[pt[1], pt[0]]
+                    matches.append(((center_x, center_y), match_val))
+                else:
+                    print(f"⏭️ 排除 {tpl_path}：中心 Y={center_y} 不在 {max_y-offset_y} ~ {max_y} 之間")
 
         if not matches:
             return None
@@ -167,8 +160,12 @@ def findPicExist(region, folder_path, threshold=0.6, mode="default", target_x: i
             best_pos = matches[0][0]
             print(f"🎯 選擇距離 X={target_x} 最近且 Y<{max_y} 的點：{best_pos}")
         else:
-            best_pos = min(matches, key=lambda m: m[1])[0] if mode == "precise" else max(matches, key=lambda m: m[1])[0]
+            if mode == "precise":
+                best_pos = min(matches, key=lambda m: m[1])[0]  # 差異度越小越好
+            else:
+                best_pos = max(matches, key=lambda m: m[1])[0]  # 匹配度越大越好
             print(f"✅ 選擇最佳匹配點：{best_pos}")
+
         # 測試指向偵測到的東西
         # pyautogui.moveTo(best_pos[0], best_pos[1])
         return best_pos

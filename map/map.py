@@ -8,6 +8,8 @@ class target_map(Enum):
     黑森林狩獵場二 = auto()
     寺院通道一 = auto()
     黑肥肥領土 = auto()
+    東方岩石路火肥肥 = auto()
+    石人寺院門外 = auto()
 
 def getTargetMapNameEn(target:target_map):
     '''取得怪物圖片路徑'''
@@ -24,6 +26,10 @@ def getTargetMapNameEn(target:target_map):
             path = 'Temple_Passage_1'
         case target_map.黑肥肥領土:
             path = 'Black_Fatty_Territory'
+        case target_map.東方岩石路火肥肥:
+            path = 'Eastern_Rock_Road_Fire_Fatty'
+        case target_map.石人寺院門外:
+            path = 'Stone_Door'
     return path
 
 def getMinimapRegion(region,target:target_map):
@@ -40,6 +46,11 @@ def getMinimapRegion(region,target:target_map):
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 288, 'height': 186}
         case target_map.黑肥肥領土:
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 353, 'height': 190}
+        case target_map.東方岩石路火肥肥:
+            minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 239, 'height': 182}
+        case target_map.石人寺院門外:
+            minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 228, 'height': 146}
+            
     return minimap_region
 
 def getMonsterRegion(region,target:target_map):
@@ -56,6 +67,10 @@ def getMonsterRegion(region,target:target_map):
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 394, 'width': region['width'], 'height': 500}    
         case target_map.黑肥肥領土:
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 394, 'width': region['width'], 'height': 500}
+        case target_map.東方岩石路火肥肥:
+            minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 394, 'width': region['width'], 'height': 500}
+        case target_map.石人寺院門外:
+            minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 470, 'width': region['width'], 'height': 400}
     return minimap_region
 
 def getMaxTopY(target:target_map):
@@ -72,7 +87,17 @@ def getMaxTopY(target:target_map):
             max_y = 40
         case target_map.黑肥肥領土:
             max_y = 40
+        case target_map.東方岩石路火肥肥:
+            max_y = 40
+        case target_map.石人寺院門外:
+            max_y = 95
+    return max_y
 
+def getMaxDownY(target:target_map):
+    max_y = None
+    match target:
+        case target_map.石人寺院門外:
+            max_y = 107
     return max_y
 
 def getMonsterToleranceY(target:target_map):
@@ -88,5 +113,9 @@ def getMonsterToleranceY(target:target_map):
         case target_map.寺院通道一:
             toleranceY = 150
         case target_map.黑肥肥領土:
-            toleranceY = 110
+            toleranceY = 200
+        case target_map.東方岩石路火肥肥:
+            toleranceY = 300
+        case target_map.石人寺院門外:
+            toleranceY = 250
     return toleranceY

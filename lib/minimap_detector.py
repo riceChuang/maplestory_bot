@@ -20,7 +20,7 @@ class MinimapEnemyDetector(threading.Thread):
         self._stuck_event = threading.Event()
         self._last_pos = None
         self._last_move_time = time.time()
-        self._stuck_timeout = 80  # 秒
+        self._stuck_timeout = 40  # 秒
         self._stuck_tolerance = 5  # px
         
     def switch_check_stuck(self):
@@ -98,10 +98,10 @@ class MinimapEnemyDetector(threading.Thread):
             cv2.waitKey(1)
 
         return max_val >= threshold
-
-    def is_reach_top_by_template(self,threshold=0.9, y_threshold=52, debug=False):
+        
+    def is_reach_top_by_template(self,threshold=0.75, y_threshold=52, debug=False):
         """
-        透過模板圖片比對判斷黃點是否在頂部
+        透過模板圖片比對判斷黃點是否太低 需要爬梯
         """
         minimap_img = self.capture_minimap()
         cv2.imwrite('minimap.png', minimap_img)
@@ -122,16 +122,42 @@ class MinimapEnemyDetector(threading.Thread):
             return center_y < y_threshold
         else:
             # print(f"❌ 匹配失敗，最大匹配度：{max_val:.4f}")
-            return False
-    
-    def get_yellow_dot_pos_in_minmap(self,threshold=0.9, debug=False):
-        '''取得小黃點在地圖座標'''
+            return False        
+
+    def is_reach_down_by_template(self,threshold=0.75, y_threshold=52, debug=False):
+        """
+        透過模板圖片比對判斷黃點是否太低 需要爬梯
+        """
+        print("-----開始判斷是否需要爬繩子-------")
         minimap_img = self.capture_minimap()
         cv2.imwrite('minimap.png', minimap_img)
         yellow_template = cv2.imread("pic/sys_ui/yellow_dot.png")
         result = cv2.matchTemplate(minimap_img, yellow_template, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
+        if max_val >= threshold:
+            center_x = max_loc[0] + yellow_template.shape[1] // 2
+            center_y = max_loc[1] + yellow_template.shape[0] // 2
+
+            if debug:
+                cv2.circle(minimap_img, (center_x, center_y), 4, (0, 255, 0), -1)
+                cv2.imshow("Match Debug", minimap_img)
+                cv2.waitKey(1)
+
+            print(f"📍 黃點匹配成功 @ ({center_x}, {center_y})，匹配度：{max_val:.4f}")
+            return center_y > y_threshold
+        else:
+            print(f"❌ 爬繩子匹配失敗， 最大匹配度：{max_val:.4f}")
+            return False    
+
+
+    def get_yellow_dot_pos_in_minmap(self,threshold=0.75, debug=False):
+        '''取得小黃點在地圖座標'''
+        minimap_img = self.capture_minimap()
+        cv2.imwrite('minimap.png', minimap_img)
+        yellow_template = cv2.imread("pic/sys_ui/yellow_dot.png")
+        result = cv2.matchTemplate(minimap_img, yellow_template, cv2.TM_CCOEFF_NORMED)
+        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
         if max_val >= threshold:
             center_x = max_loc[0] + yellow_template.shape[1] // 2
             center_y = max_loc[1] + yellow_template.shape[0] // 2
@@ -149,7 +175,7 @@ class MinimapEnemyDetector(threading.Thread):
         
     def _check_stuck(self):
         '''內部方法：檢查小黃點是否卡住（沒移動）'''
-        pos = self.get_yellow_dot_pos_in_minmap(threshold=0.85)
+        pos = self.get_yellow_dot_pos_in_minmap(threshold=0.75)
         now = time.time()
 
         if pos:
