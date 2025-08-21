@@ -36,7 +36,6 @@ def find_player(region,monsterRegion,is_user_role_pic,scene_templates):
                 best_match_x = max_loc[0] + region['left']+template.shape[1] // 2
                 best_match_y = max_loc[1] + region['top'] + template.shape[0] // 2
                 # 測試偵測的位置是否正確
-                # moveToclick(best_match_x,max_loc[1])
                 # 找到就離開
                 return (best_match_x, best_match_y)
 
