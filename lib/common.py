@@ -67,7 +67,8 @@ def find_player_and_center(region,monsterRegion,is_user_role_pic,scene_templates
         threshold = 0.5
         best_match_val = 0
         best_match_x = None
-        best_match_y = None
+        leftDx = None
+        rightDx = None
 
         left_x = region['left']  # 最左邊 X
         center_x = region['left'] + screenshot.shape[1] // 2  # 中間 X
@@ -79,7 +80,7 @@ def find_player_and_center(region,monsterRegion,is_user_role_pic,scene_templates
         for tpl_path in templates:
             template = cv2.imread(tpl_path)
             if template is None:
-                print(f"❌ 無法讀取模板圖 {tpl_path}")
+                print(f"❌ 無法讀取模板圖 {tpl_path}" )
                 continue
 
             # ✅ 使用彩色原圖比對
@@ -91,15 +92,17 @@ def find_player_and_center(region,monsterRegion,is_user_role_pic,scene_templates
             if max_val >= threshold and max_val > best_match_val:
                 best_match_val = max_val
                 best_match_x = max_loc[0] + region['left']+template.shape[1] // 2
-                best_match_y = max_loc[1] + region['top'] + template.shape[0] // 2
+                # best_match_y = max_loc[1] + region['top'] + template.shape[0] // 2
                 # 測試偵測的位置是否正確
                 # moveToclick(best_match_x,max_loc[1])
                 # 找到就離開
-                return (best_match_x, best_match_y, center_x)
+                leftDx = abs(left_x - best_match_x)
+                rightDx = abs(right_x - best_match_x)
+                return (best_match_x, center_x, leftDx, rightDx)
 
 
         if best_match_x is not None:
-            return (best_match_x, best_match_y, center_x)
+            return (best_match_x, center_x, leftDx, rightDx)
 
     return None
 

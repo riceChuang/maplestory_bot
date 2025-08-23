@@ -388,21 +388,24 @@ def loopAction():
     while True:
         if interruptEVent():
             return
-        times = 14
+        times = 13
         direction = checkPlayerAtLeftOrRight()
         if direction is None:
             print("❌ 無法確定玩家方向，停止攻擊")
             return
+        if direction[1] is True:
+            print(f"玩家在邊緣，方向：{direction[0]}, dx < 100 {direction[1]}")
+            times = 15
         pyautogui.keyDown(MAIN_ATTACK_SKILL)
         for i in range(times):
             if interruptEVent():
-                pyautogui.keyUp(direction)
+                pyautogui.keyUp(direction[0])
                 pyautogui.keyUp(MAIN_FLASH_SKILL)
                 pyautogui.keyUp(MAIN_ATTACK_SKILL)
                 return
-            tempdirection = direction
+            tempdirection = direction[0]
             if i % 5 == 0:
-                tempdirection = anotherDirection(direction)
+                tempdirection = anotherDirection(direction[0])
                 
             print("========== 攻擊目標 =========")
             pyautogui.keyDown(MAIN_FLASH_SKILL)
@@ -410,19 +413,19 @@ def loopAction():
             time.sleep(0.2)  
             pyautogui.keyUp(tempdirection)
             pyautogui.keyUp(MAIN_FLASH_SKILL)
-            time.sleep(0.8)
+            time.sleep(0.6)
         pyautogui.keyUp(MAIN_ATTACK_SKILL)
-        return
 
 def anotherDirection(direction):
     if direction == 'left':
         return 'right'
     elif direction == 'right':
         return 'left'
-    
 
 def checkPlayerAtLeftOrRight():
     '''檢查玩家往哪邊移動'''
+    result = None
+    leftOrRight = None
     monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
     # 找玩家
     
@@ -433,18 +436,29 @@ def checkPlayerAtLeftOrRight():
 
     player_x = player_pos[0]
     # 計算視窗中間 X
-    center_x = player_pos[2]  # 使用 find_player_and_center 返回的 center_x
-
+    center_x = player_pos[1]  # 使用 find_player_and_center 返回的 center_x
+    leftDx = player_pos[2] #left 
+    rightDx = player_pos[3] # right
     if player_x < center_x:
         print("👈 玩家需要往右邊移動")
-        return "right"
+        leftOrRight = "right"
     elif player_x > center_x:
         print("👉 玩家需要往左邊移動")
-        return "left"
+        leftOrRight = "left"
     else:
         print("😐 玩家在視窗正中央")
-        return "right"
+        leftOrRight = "right"
     
+    if leftDx < 200 or rightDx < 200:
+        print(f"✅ 玩家在邊緣，方向：{leftOrRight}, dx < 100 {leftDx < 200 or rightDx < 200}")
+        result = True
+        return (leftOrRight,result )
+    else:
+        print(f"❌ 玩家不在邊緣，方向：{leftOrRight}, dx < 100 {leftDx < 200 or rightDx < 200}")
+        result = False
+        return (leftOrRight,result )
+
+
 def tryUnseal():
     '''嘗試解輪'''
 
@@ -581,10 +595,11 @@ def move_to_unseal_position(all_unseal_templates, max_attempts, tolerance):
     print("⚠️ 超過最大嘗試次數，未能精準到達目標")
     return False
 
-f
+
 def interruptEVent():
     '''停止流程的重要中斷'''
     if ( (UNSEAL_MGR.is_unseal_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1) 
+        or (UNSEAL_MGR.is_exp_stop_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1) 
         or (MINI_MAP_ENEMY_MGR.is_enemy_detected() and IS_ENEMY_CHANGE_CHANNEL==1) 
         or MINI_MAP_ENEMY_MGR.is_stuck()
         ):
@@ -598,8 +613,9 @@ def changeState(STATE:State):
 
     if GAME_STATE == State.CHANGE_CHANNEL:
         return
-    elif UNSEAL_MGR.is_unseal_detected() and IS_UNSEAL_TRY == 1:
-        GAME_STATE = State.UNSEAL_TRY
+    elif UNSEAL_MGR.is_exp_stop_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1:
+        NOTIFIER_MGR.send('❗️ 偵測到經驗停止，切換頻道')
+        GAME_STATE = State.CHANGE_CHANNEL
     elif UNSEAL_MGR.is_unseal_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1:
         GAME_STATE = State.CHANGE_CHANNEL
     elif (MINI_MAP_ENEMY_MGR.is_enemy_detected() and IS_ENEMY_CHANGE_CHANNEL==1):
@@ -649,6 +665,7 @@ def main():
                         attack()
                 changeState(State.ATTACK_ACTION)
             case State.CHANGE_CHANNEL:
+                UNSEAL_MGR.pause_exp_monitor()
                 UI_CONTRO_MGR.change_channel()
                 UNSEAL_MGR.reset()
                 MINI_MAP_ENEMY_MGR.reset()
@@ -677,9 +694,7 @@ def main():
                     changeState(State.ATTACK_ACTION)
                 UNSEAL_MGR.set_send_discord(True)
                 MINI_MAP_ENEMY_MGR.switch_check_stuck()  # 恢復黃點移動偵測
-def testloop():
-    while True:
-        pass
+
 # ---------- 執行 ----------
 if __name__ == "__main__":
     REGION = get_game_region()

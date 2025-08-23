@@ -29,6 +29,10 @@ class UnsealDetector:
     {"top": region['top']+350, "left": int(region['left']+region['width']/5+2*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": 450},
     {"top": region['top']+350, "left": int(region['left']+region['width']/5+3*region['width']/5*3/4), "width": int(region['width']/5*3/4), "height": 450},
     ]
+        # 監聽經驗值條
+        self.exp_region = {'left': region['left'] + 1020, 'top': region['top'] + 1023, 'width': 245, 'height': 31}
+        self._exp_stop_detected = threading.Event()
+        self.exp_monitor_paused = False
 
     def rigesterMgr(self,dc_notifier:DiscordNotifier):
         self.dc_notifier = dc_notifier
@@ -41,6 +45,9 @@ class UnsealDetector:
 
     def reset(self):
         self._unseal_detected.clear()
+        self._exp_stop_detected.clear()
+        self.exp_monitor_paused = False
+        self.drop_exp_png()
 
     def unseal_position(self):
         self._check_unseal_icon(self._capture_screen())
@@ -51,7 +58,9 @@ class UnsealDetector:
 
     def start(self):
         self.running = True
+        self.drop_exp_png()
         threading.Thread(target=self._monitor, daemon=True).start()
+        threading.Thread(target=self._monitor_exp, daemon=True).start()
 
     def _capture_screen(self):
         with mss.mss() as sct:
@@ -63,6 +72,11 @@ class UnsealDetector:
             img = np.array(sct.grab(self.unseal_window))
             cv2.imwrite("window.png", img)
             return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    def _capture_exp(self):
+            with mss.mss() as sct:
+                img = np.array(sct.grab(self.exp_region))
+                return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
     def check_usseal_window(self, all_unseal_templates):
         frame = self._capture_window()
@@ -123,3 +137,77 @@ class UnsealDetector:
                 self._unseal_detected.set()
 
             time.sleep(0.3)  # 頻率高一點，確保即時偵測
+
+    def pause_exp_monitor(self):
+        self.exp_monitor_paused = True
+
+    def resume_exp_monitor(self):
+        self.exp_monitor_paused = False
+
+    def is_exp_stop_detected(self):
+        return self._exp_stop_detected.is_set()
+
+    def drop_exp_png(self):
+        exp_png_path = "exp.png"
+        if os.path.exists(exp_png_path):
+            os.remove(exp_png_path)
+
+    def _capture_exp(self):
+            with mss.mss() as sct:
+                img = np.array(sct.grab(self.exp_region))
+                return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
+
+    def _monitor_exp(self):
+        print("🛡️ 監聽經驗條中...")
+        last_notify_time = 0
+        compare_interval = 60
+        sleep_interval = 0.3
+        last_compare_time = time.time() - compare_interval  # 第一次就比對
+        while self.running:
+            now = time.time()
+            if self.exp_monitor_paused:
+                # print("⏸️ 經驗條監聽暫停中...")
+                time.sleep(sleep_interval)
+                continue
+            if now - last_compare_time < compare_interval:
+                # print(f"⏳ 距離上次比對不到 {compare_interval} 秒，暫不比對")
+                time.sleep(sleep_interval)
+                continue
+            
+            exp_png_path = "exp.png"
+            if os.path.exists(exp_png_path):
+                exp_frame = cv2.imread(exp_png_path)
+                if exp_frame is None:
+                    print("❌ 無法讀取 exp.png，重新截圖")
+                    exp_frame = self._capture_exp()
+                    cv2.imwrite(exp_png_path, exp_frame)
+                    time.sleep(sleep_interval)
+                    continue
+
+                compare_frame = self._capture_exp()
+                cv2.imwrite("temp_exp.png", compare_frame)
+                match_val = self._check_exp_icon(compare_frame, exp_frame)
+                if match_val > 0.99:
+                    print(f"⚠️ 經驗條無變化，匹配度：{match_val:.4f}")
+                    if now - last_notify_time >= 3:
+                        if self.send_discord:
+                            self.dc_notifier.send('⚠️ 偵測到經驗條無增加，認定為輪存在，自動換頻')
+                            last_notify_time = now
+                    self._exp_stop_detected.set()
+                else:
+                    print(f"✅ 經驗條有變化，匹配度：{match_val:.4f}，繼續監聽")
+                    cv2.imwrite(exp_png_path, compare_frame)
+                last_compare_time = now
+            else:
+                exp_frame = self._capture_exp()
+                cv2.imwrite(exp_png_path, exp_frame)
+                print("📸 已儲存 exp.png 作為基準")
+                last_compare_time = now
+
+            time.sleep(sleep_interval)
+
+    def _check_exp_icon(self, frame, template):
+        # 使用模板匹配，回傳最大匹配值
+        res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
+        _, max_val, _, _ = cv2.minMaxLoc(res)
+        return max_val
