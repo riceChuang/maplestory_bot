@@ -7,7 +7,7 @@ from lib.discord_notifier import DiscordNotifier
 
 
 class MinimapEnemyDetector(threading.Thread):
-    def __init__(self, region, interval=1):
+    def __init__(self, region, interval=1, is_check_stuck=True, is_enemy_check=True):
         super().__init__()
         self.region = region  # {'top':, 'left':, 'width':, 'height':}
         self.interval = interval
@@ -15,7 +15,8 @@ class MinimapEnemyDetector(threading.Thread):
         self.last_alert_time = 0
         self.alert_cooldown = 3  # 幾秒內不重複發送
         self._enemy_detected = threading.Event()  # ✅ 新增事件旗標
-        self.is_check_stuck = True  # 是否啟用黃點移動偵測
+        self.is_check_stuck = is_check_stuck  # 是否啟用黃點移動偵測
+        self.is_enemy_check = is_enemy_check  # 是否啟用紅點偵測
         # ⛑️ 防呆追蹤設定
         self._stuck_event = threading.Event()
         self._last_pos = None
@@ -48,13 +49,14 @@ class MinimapEnemyDetector(threading.Thread):
         while self.running:
             frame = self.capture_minimap()
             cv2.imwrite('screenshot.png', frame)
-            if self.has_red_dot(frame):
-                now = time.time()
-                if now - self.last_alert_time >= self.alert_cooldown:
-                    print("🔴 偵測到紅點！")
-                    self.dc_notifier.send("🔴 小地圖發現紅點！")
-                    self.last_alert_time = now
-                    self._enemy_detected.set()  # ✅ 設定事件
+            if self.is_enemy_check:
+                if self.has_red_dot(frame):
+                    now = time.time()
+                    if now - self.last_alert_time >= self.alert_cooldown:
+                        print("🔴 偵測到紅點！")
+                        self.dc_notifier.send("🔴 小地圖發現紅點！")
+                        self.last_alert_time = now
+                        self._enemy_detected.set()  # ✅ 設定事件
             # ➕ 進行黃點移動偵測（防呆）
             if self.is_check_stuck:
                 self._check_stuck()

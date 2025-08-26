@@ -39,6 +39,7 @@ IS_CLIMB = setting['is_climb']
 ATTACK_RANGE = setting['attack_range']
 WEBHOOK_URL = setting['webhook_url']
 '''Auto Skill'''
+IS_AUTO_SKILL = setting['is_auto_skill']
 AUTO_SKILL_BUTTOM = setting['auto_skill_buttom'].split(",")
 AUTO_SKILL_INTERVAL = setting['auto_skill_interval']
 
@@ -711,11 +712,16 @@ if __name__ == "__main__":
     
     # # 自動施放技能
     AUTO_SKILL_MGR = AutoSkillManager(AUTO_SKILL_BUTTOM,AUTO_SKILL_INTERVAL)
-    AUTO_SKILL_MGR.start()
+    if IS_AUTO_SKILL == 1:
+        AUTO_SKILL_MGR.start()
+    
 
     # 🔍 小地圖區域（需要你手動確認）
+    is_ememy_check = False
+    if IS_ENEMY_CHANGE_CHANNEL == 1 :
+        is_ememy_check = True
     MINIMAP_REGION = getMinimapRegion(REGION,target_map[GAME_MAP])
-    MINI_MAP_ENEMY_MGR = MinimapEnemyDetector(MINIMAP_REGION,0.3)
+    MINI_MAP_ENEMY_MGR = MinimapEnemyDetector(MINIMAP_REGION,0.3,True,is_ememy_check)
     MINI_MAP_ENEMY_MGR.rigesterMgr(NOTIFIER_MGR)
     MINI_MAP_ENEMY_MGR.start()
 
