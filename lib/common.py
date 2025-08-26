@@ -19,13 +19,6 @@ def find_player(region,monsterRegion,is_user_role_pic,scene_templates):
         best_match_x = None
         best_match_y = None
 
-        left_x = region['left']  # 最左邊 X
-        center_x = region['left'] + screenshot.shape[1] // 2  # 中間 X
-        right_x = region['left'] + screenshot.shape[1] - 1    # 最右邊 X
-
-        # print(f"最左邊X: {left_x}, 中間X: {center_x}, 最右邊X: {right_x}")
-
-
         for tpl_path in templates:
             template = cv2.imread(tpl_path)
             if template is None:
@@ -131,7 +124,7 @@ def findPicExist(region, folder_path, threshold=0.6, mode="default", target_x: i
             return None
 
         matches = []
-        offset_y = 365
+        offset_y = 260
 
         for tpl_path in templates:
             template = cv2.imread(tpl_path)

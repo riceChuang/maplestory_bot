@@ -163,14 +163,23 @@ class UnsealDetector:
         compare_interval = 60
         sleep_interval = 0.3
         last_compare_time = time.time() - compare_interval  # 第一次就比對
+        last_exp_report_time = time.time()  # 新增：上次 exp.png 報告時間
+        exp_report_interval = 900  # 15 分鐘
+
         while self.running:
             now = time.time()
+            # 每 15 分鐘傳送一次 exp.png
+            if now - last_exp_report_time >= exp_report_interval:
+                exp_png_path = "exp.png"
+                if os.path.exists(exp_png_path) and self.send_discord:
+                    self.dc_notifier.send_file(exp_png_path, "定時回報經驗條")
+                    print("📤 已定時回報 exp.png 到 Discord")
+                last_exp_report_time = now
+
             if self.exp_monitor_paused:
-                # print("⏸️ 經驗條監聽暫停中...")
                 time.sleep(sleep_interval)
                 continue
             if now - last_compare_time < compare_interval:
-                # print(f"⏳ 距離上次比對不到 {compare_interval} 秒，暫不比對")
                 time.sleep(sleep_interval)
                 continue
             

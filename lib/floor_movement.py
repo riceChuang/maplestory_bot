@@ -18,12 +18,13 @@ class LadderClimber:
             print("❌ 無法取得角色位置")
             return False
         player_x, player_y = player_pos
-
+        print(f"🪢 發現角色位置 @ ({player_x}, {player_y})")
+        pyautogui.moveTo(player_x,player_y)
         print("🎯 開始尋找繩子位置...")
         stair_pos = findPicExist(
             self.region,
             f'pic/updown/{getTargetMapNameEn(self.game_map)}',
-            threshold=0.7,
+            threshold=0.8,
             mode='default',
             target_x=player_x,
             max_y=player_y
@@ -33,7 +34,7 @@ class LadderClimber:
             return False
         rope_x,rope_y = stair_pos
         print(f"🪢 發現繩子 @ ({rope_x}, {rope_y})")
-
+        pyautogui.moveTo(rope_x,rope_y)
         dx = rope_x - player_x
 
         # 靠近繩子 (不需走到正下方，只需接近)

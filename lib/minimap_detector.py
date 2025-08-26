@@ -101,7 +101,7 @@ class MinimapEnemyDetector(threading.Thread):
         
     def is_reach_top_by_template(self,threshold=0.75, y_threshold=52, debug=False):
         """
-        透過模板圖片比對判斷黃點是否太低 需要爬梯
+        判斷太高準備下去
         """
         minimap_img = self.capture_minimap()
         cv2.imwrite('minimap.png', minimap_img)
@@ -118,7 +118,7 @@ class MinimapEnemyDetector(threading.Thread):
                 cv2.imshow("Match Debug", minimap_img)
                 cv2.waitKey(1)
 
-            print(f"📍 黃點匹配成功 @ ({center_x}, {center_y})，匹配度：{max_val:.4f}")
+            print(f"📍 判斷太高!!! 黃點 @ ({center_x}, {center_y})，最大高度: {y_threshold} 匹配度：{max_val:.4f}")
             return center_y < y_threshold
         else:
             # print(f"❌ 匹配失敗，最大匹配度：{max_val:.4f}")
