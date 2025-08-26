@@ -37,7 +37,7 @@ def getMinimapRegion(region,target:target_map):
     minimap_region = None
     match target:
         case target_map.巨人之森:
-            minimap_region =  {'left': region['left'] + 15, 'top': region['top'] + 153, 'width': 249, 'height': 220}
+            minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 249, 'height': 249}
         case target_map.CD:
             minimap_region = None
         case target_map.黑森林狩獵場二:
@@ -58,7 +58,7 @@ def getMonsterRegion(region,target:target_map):
     minimap_region = None
     match target:
         case target_map.巨人之森:
-            minimap_region =  {'left': region['left'] + 15, 'top': region['top'] + 153, 'width': 249, 'height': 220}
+            minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 300, 'width': region['width'], 'height': 550}
         case target_map.CD:
             minimap_region = None
         case target_map.黑森林狩獵場二:
@@ -78,7 +78,7 @@ def getMaxTopY(target:target_map):
     max_y = None
     match target:
         case target_map.巨人之森:
-            max_y = 40  
+            max_y = 185  
         case target_map.CD:
             max_y = 40
         case target_map.黑森林狩獵場二:
@@ -105,7 +105,7 @@ def getMonsterToleranceY(target:target_map):
     toleranceY = 200
     match target:
         case target_map.巨人之森:
-            toleranceY = 40
+            toleranceY = 250
         case target_map.CD:
             toleranceY = 40
         case target_map.黑森林狩獵場二:

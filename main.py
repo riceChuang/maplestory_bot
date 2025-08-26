@@ -14,10 +14,11 @@ from lib.common import find_player
 from lib.common import find_player_and_center
 from lib.floor_movement import LadderClimber
 from lib.minimap_detector import MinimapEnemyDetector
-from map.map import getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getTargetMapNameEn, target_map
+from map.map import getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getMaxDownY, getTargetMapNameEn, target_map
 from map.proess_state import State
 from lib.discord_notifier import DiscordNotifier
 from lib.unseal_detector import UnsealDetector
+from lib.auto_skill import AutoSkillManager
 # 全域讀取設定
 with open('conf/config.json', 'r', encoding='utf-8') as f:
     setting = json.load(f)
@@ -37,6 +38,9 @@ IS_CLIMB = setting['is_climb']
 '''是否爬樓層 1:是 0:否'''
 ATTACK_RANGE = setting['attack_range']
 WEBHOOK_URL = setting['webhook_url']
+'''Auto Skill'''
+AUTO_SKILL_BUTTOM = setting['auto_skill_buttom'].split(",")
+AUTO_SKILL_INTERVAL = setting['auto_skill_interval']
 
 # 法師用
 MAIN_FLASH_SKILL = setting['main_flash_skill']
@@ -70,6 +74,8 @@ UI_CONTRO_MGR = None
 '''介面點擊流程'''
 FLOOR_MOVEMENT = None
 '''上下樓控制'''
+'''自動施放技能'''
+AUTO_SKILL_MGR = None
 # 取得遊戲視窗區域
 def get_game_region():
     # 取得視窗
@@ -98,7 +104,7 @@ def capture_screen(region):
         return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
 
-def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=THRESHOLD):
+def find_monster (frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=THRESHOLD):
     folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
     best_candidate = None
     monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
@@ -139,7 +145,7 @@ def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=TH
         # 判斷 Y 軸是否過遠
         y_tolerance = getMonsterToleranceY(target_map[GAME_MAP])
         dy = abs(center_y - player_y)
-        print(f"↕️ 與玩家 Y 差值 dy = {dy}")
+        # print(f"↕️ 與玩家 Y 差值 dy = {dy}")
         if dy > y_tolerance:
             print(f"🟥 排除：Y 差值 {dy} 超出容忍範圍 {y_tolerance}")
             continue
@@ -147,14 +153,18 @@ def find_monster(frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=TH
         # 判斷匹配值是否足夠        
         dx = abs(center_x - player_x)
         print(f"📏 水平差距 dx = {dx}")
-        if dx < best_candidate[0] :
+        if best_candidate is None:
+            best_candidate = (center_x, center_y)
+            if IS_FIND_MONSTER_CLOSER == 0:
+                return best_candidate
+        elif dx < best_candidate[0] :
             # 找到更近的怪物（或匹配度更高）
             best_candidate = (center_x, center_y)
             if IS_FIND_MONSTER_CLOSER == 0:
                 return best_candidate
 
     if best_candidate:
-        print(f"✅ 最近且符合條件的怪物：{best_candidate}，匹配值：{best_score:.3f}")
+        print(f"✅ 最近且符合條件的怪物：{best_candidate}")
         return best_candidate
     else:
         print("🟡 沒有符合門檻與距離條件的怪物")
@@ -172,7 +182,7 @@ def find_best_match_near_center(res, center_x, center_y, y_tolerance, template, 
     # 過濾 y 座標與 center_y 差距超過 y_tolerance 的點
     filtered_points = []
     for pt in points:
-        print(f"pt y: {pt[1]}, center_y: {center_y}")
+        # print(f"pt x:{pt[0]}  y: {pt[1]},center_x:{center_x}  center_y: {center_y}")
         match_x = pt[0] + REGION['left'] + template.shape[1] // 2
         match_y = pt[1] + REGION['top'] + template.shape[0] // 2
         if abs(match_y - center_y) <= y_tolerance:
@@ -185,6 +195,7 @@ def find_best_match_near_center(res, center_x, center_y, y_tolerance, template, 
     best_point = min(filtered_points, key=lambda pt: abs(pt[0] - center_x))
 
     match_x, match_y = best_point
+    # print(f"best_point x:{best_point[0]}  y: {best_point[1]},center_x:{center_x}  center_y: {center_y}")
     return match_x, match_y
 
 def monster_still_exist_nearby(frame, target_pos, folder_path=MONSTERS_PATH, tolerance=LOCK_TOLERANCE):
@@ -264,22 +275,12 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
             pyautogui.moveTo(item_x,item_y)
             # 移動靠近道具
             if abs(dx) > tolerance:
-                times = math.ceil(dx / 250)
                 direction = 'right' if dx > 0 else 'left'
                 print(f"🚶‍♂️ 移動方向：{direction}，靠近道具")
-                for i in range(times):
-                    if interruptEVent():
-                        pyautogui.keyUp(direction)
-                        if IS_USE_FLASH_SKILL:
-                            pyautogui.keyUp(MAIN_FLASH_SKILL)
-                        return
-                    pyautogui.keyDown(direction)
-                    if IS_USE_FLASH_SKILL:
-                            pyautogui.keyDown(MAIN_FLASH_SKILL)
-                    time.saleep(0.5)  
-                    pyautogui.keyUp(direction)
-                    if IS_USE_FLASH_SKILL:
-                        pyautogui.keyUp(MAIN_FLASH_SKILL)
+                pyautogui.keyDown(direction)
+                time.sleep(min(3, abs(dx) / ROLE_SPEED_SEC_PX))  # 假設每秒 300px，調整距離
+                pyautogui.keyUp(direction)
+                # time.sleep(0.2)
             else:
                 print("✅ 已接近道具，準備撿取")
             
@@ -340,7 +341,7 @@ def move_to_target(target_pos):
         pyautogui.keyDown('right')
         time.sleep(0.1)
         pyautogui.keyUp('right')
-    elif dx < 0:
+    elif dx < 0:  
         print("👈 面向左（怪物在左側）")
         pyautogui.keyDown('left')
         time.sleep(0.1)
@@ -357,20 +358,12 @@ def attack():
 
 def attacAction():
     '''攻擊行為流程'''
-    target_pos = None
     while True:
         if interruptEVent():
             return
         monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
         frame = capture_screen(monsterRegion)
-        if target_pos:
-            # 檢查原目標是否還在
-            if monster_still_exist_nearby(frame, target_pos):
-                attack()
-                continue
-            else:
-                print("☠️ 怪物消失，釋放目標")
-                target_pos = None
+        cv2.imwrite("monsterRegion.png", frame)
 
         # 搜尋新怪物
         new_pos = find_monster(frame)
@@ -378,7 +371,7 @@ def attacAction():
             target_pos = new_pos
             print(f"🎯 鎖定新怪物：{target_pos}")
             move_to_target(target_pos)
-            attack()
+            attack()    
             return 'pickup'
         else:
             return 'move_up_or_down'
@@ -639,7 +632,7 @@ def main():
                     changeState(State.ATTACK_ACTION)
                 else:
                     print("🔍 尋找怪物...")
-                    endState = attacAction()
+                    endState =  attacAction()
                     if endState == 'move_up_or_down' and IS_CLIMB:
                         changeState(State.MOVE_UP_OR_DOWN)
                     else:
@@ -648,15 +641,20 @@ def main():
                 find_and_pick_item(REGION)
                 changeState(State.ATTACK_ACTION)
             case State.MOVE_UP_OR_DOWN:
-                if MINI_MAP_ENEMY_MGR.is_reach_top_by_template(0.8, getMaxTopY(target_map[GAME_MAP])):
+                if MINI_MAP_ENEMY_MGR.is_reach_top_by_template(0.75, getMaxTopY(target_map[GAME_MAP])):
+                                    
+                    print("------準備下去-------")
                     pyautogui.keyUp('up')
-                    for i in range(5):
+                    for i in range(1):
                         pyautogui.keyDown('down')
                         pyautogui.keyDown('right')
                         time.sleep(0.1)
                         pyautogui.press('space')
-                        time.sleep(0.8)
-                    pyautogui.keyUp('down')
+                        time.sleep(0.1)
+                        pyautogui.keyUp('down')
+                        pyautogui.keyUp('right')
+                        time.sleep(0.3) 
+
                 else:
                     find_player_in_minimap_callback = partial(MINI_MAP_ENEMY_MGR.get_yellow_dot_pos_in_minmap, 0.7)
                     player_pos = find_player(REGION, REGION, IS_USE_ROLE_PIC, SCENE_TEMPLATES)
@@ -669,9 +667,13 @@ def main():
                 UI_CONTRO_MGR.change_channel()
                 UNSEAL_MGR.reset()
                 MINI_MAP_ENEMY_MGR.reset()
+                AUTO_SKILL_MGR.reset()
                 time.sleep(5)
+                ## only for stone door
+                pyautogui.press('up')
+                time.sleep(0.4)
                 pyautogui.keyDown('right')
-                time.sleep(5)
+                time.sleep(4)
                 pyautogui.keyUp('right')
                 changeState(State.ATTACK_ACTION)
             case State.UNSEAL_TRY:
@@ -707,6 +709,9 @@ if __name__ == "__main__":
     UNSEAL_MGR.rigesterMgr(NOTIFIER_MGR)
     UNSEAL_MGR.start()
     
+    # # 自動施放技能
+    AUTO_SKILL_MGR = AutoSkillManager(AUTO_SKILL_BUTTOM,AUTO_SKILL_INTERVAL)
+    AUTO_SKILL_MGR.start()
 
     # 🔍 小地圖區域（需要你手動確認）
     MINIMAP_REGION = getMinimapRegion(REGION,target_map[GAME_MAP])
