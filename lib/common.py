@@ -4,7 +4,7 @@ import cv2
 import mss
 import numpy as np
 
-def find_player(region,monsterRegion,is_user_role_pic,scene_templates):
+def find_player(region,monsterRegion,is_user_role_pic ,scene_templates):
     with mss.mss() as sct:
         img = np.array(sct.grab(monsterRegion))
         screenshot = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)

@@ -164,7 +164,7 @@ class UnsealDetector:
         sleep_interval = 0.3
         last_compare_time = time.time() - compare_interval  # 第一次就比對
         last_exp_report_time = time.time()  # 新增：上次 exp.png 報告時間
-        exp_report_interval = 900  # 15 分鐘
+        exp_report_interval = 1800  # 15 分鐘
 
         while self.running:
             now = time.time()
