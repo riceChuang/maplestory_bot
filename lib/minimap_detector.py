@@ -71,7 +71,7 @@ class MinimapEnemyDetector(threading.Thread):
             img = np.array(sct.grab(self.region))
             return cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-    def has_red_dot(self, frame, template_path="pic/sys_ui/red_dot.png", threshold=0.85, debug=False):
+    def has_red_dot(self, frame, template_path="pic/sys_ui/red_dot.png", threshold=0.75, debug=False):
         """
         用彩色模板比對方式判斷小地圖中是否有紅點
         :param frame: 擷取到的小地圖畫面（BGR）

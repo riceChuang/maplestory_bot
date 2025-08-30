@@ -379,42 +379,60 @@ def attacAction():
 
 def loopAction():
     '''循環行為'''
+    retryTimes = 10
     while True:
         if interruptEVent():
-            return
+            return 'change_channel'
         times = 13
         direction = checkPlayerAtLeftOrRight()
         if direction is None:
+            retryTimes -= 1
+            if retryTimes <= 0:
+                print("❌ 無法確定玩家太多次 切換頻道")    
+                return 'change_channel'
             print("❌ 無法確定玩家方向，停止攻擊")
-            return
+            time.sleep(1)
+            continue 
         if direction[1] is True:
             print(f"玩家在邊緣，方向：{direction[0]}, dx < 100 {direction[1]}")
             times = 15
-        pyautogui.keyDown(MAIN_ATTACK_SKILL)
         for i in range(times):
             if interruptEVent():
                 pyautogui.keyUp(direction[0])
                 pyautogui.keyUp(MAIN_FLASH_SKILL)
                 pyautogui.keyUp(MAIN_ATTACK_SKILL)
-                return
+                return 'change_channel'
             tempdirection = direction[0]
             if i % 5 == 0:
                 tempdirection = anotherDirection(direction[0])
+                ramdomAction()
                 
             print("========== 攻擊目標 =========")
+            pyautogui.keyDown(MAIN_ATTACK_SKILL)
             pyautogui.keyDown(MAIN_FLASH_SKILL)
             pyautogui.keyDown(tempdirection)
             time.sleep(0.2)  
             pyautogui.keyUp(tempdirection)
             pyautogui.keyUp(MAIN_FLASH_SKILL)
             time.sleep(0.6)
-        pyautogui.keyUp(MAIN_ATTACK_SKILL)
+            pyautogui.keyUp(MAIN_ATTACK_SKILL)
+        
 
 def anotherDirection(direction):
     if direction == 'left':
         return 'right'
     elif direction == 'right':
         return 'left'
+
+def ramdomAction():
+    '''隨機行為'''
+    actions = ['d', 'space', 'down']
+    action = np.random.choice(actions)
+    duration = np.random.uniform(0.5, 1)  # 隨機持續時間
+    print(f"🔀 隨機行為: {action} 持續 {duration:.2f} 秒")
+    pyautogui.keyDown(action)
+    time.sleep(duration)
+    pyautogui.keyUp(action)
 
 def checkPlayerAtLeftOrRight():
     '''檢查玩家往哪邊移動'''
@@ -629,8 +647,11 @@ def main():
                 changeState(State.ATTACK_ACTION)
             case State.ATTACK_ACTION:
                 if IS_WIZARD == 1:
-                    loopAction()
-                    changeState(State.ATTACK_ACTION)
+                    endState = loopAction()
+                    if endState is None:
+                        changeState(State.ATTACK_ACTION)                        
+                    elif endState == 'change_channel':
+                        changeState(State.CHANGE_CHANNEL)
                 else:
                     print("🔍 尋找怪物...")
                     endState =  attacAction()

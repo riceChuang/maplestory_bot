@@ -23,7 +23,12 @@
     "is_unseal_try": 0,
     "webhook_url_comment": "訊息通知到DC",
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
-
+    "is_auto_skill_comment": "是否開啟自動技能按鈕 1:是 0:否",
+    "is_auto_skill": 0,
+    "auto_skill_buttom_comment": "自動施放被動技能按鈕 'a','b','c'",
+    "auto_skill_buttom":"",
+    "auto_skill_interval_comment": "自動施放被動技能間隔 秒數",
+    "auto_skill_interval": 100,
     "sprite_line": "法師--------------------------------------------------------------------------------",
 
     "main_flash_skill_comment": "主要法師閃現技能",
