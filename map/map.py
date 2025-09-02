@@ -55,7 +55,7 @@ def getMinimapRegion(region,target:target_map):
 
 def getMonsterRegion(region,target:target_map):
     '''取得monster 搜尋範圍'''
-    minimap_region = None
+    minimap_region = {'left': region['left'] + 0, 'top': region['top'] + 300, 'width': region['width'], 'height': 550}
     match target:
         case target_map.巨人之森:
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 300, 'width': region['width'], 'height': 550}
@@ -75,7 +75,7 @@ def getMonsterRegion(region,target:target_map):
 
 def getMaxTopY(target:target_map):
     '''取得對應地圖的最高點y'''
-    max_y = None
+    max_y = 40
     match target:
         case target_map.巨人之森:
             max_y = 185  
@@ -119,3 +119,10 @@ def getMonsterToleranceY(target:target_map):
         case target_map.石人寺院門外:
             toleranceY = 250
     return toleranceY
+
+def getClimbTargets(target:target_map):
+    '''取得攀爬的目標點'''
+    targets = []
+    if target == target_map.黑森林狩獵場二:
+        targets = [(54,61),(149,61),(44,82),(150,103),(97,131),(40,152),(202,173),(141,173),(114,173),(80,173)]
+    return targets

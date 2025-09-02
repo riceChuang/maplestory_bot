@@ -4,12 +4,13 @@ import requests
 from datetime import datetime
 
 class DiscordNotifier:
-    def __init__(self, webhook_url: str):
+    def __init__(self, webhook_url: str, role_prefix_name: str):
         self.webhook_url = webhook_url
+        self.role_prefix_name = role_prefix_name
 
     def send(self, message: str):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        content = f"[{now}] {message}"
+        content = f"[{now}] [{self.role_prefix_name}] {message}"
 
         payload = {"content": content}
         try:
@@ -23,7 +24,7 @@ class DiscordNotifier:
 
     def send_file(self, file_path: str, message: str = ""):
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        content = f"[{now}] {message}"
+        content = f"[{now}] [{self.role_prefix_name}] {message}"
         try:
             with open(file_path, "rb") as f:
                 files = {"file": (file_path, f)}

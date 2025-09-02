@@ -9,44 +9,18 @@ import glob
 import os
 import json
 import math
+import sys
+from lib.config_loader import GameConfig
 from lib.channel_manager import ChannelManager
 from lib.common import find_player
 from lib.common import find_player_and_center
 from lib.floor_movement import LadderClimber
 from lib.minimap_detector import MinimapEnemyDetector
-from map.map import getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getMaxDownY, getTargetMapNameEn, target_map
+from map.map import getClimbTargets, getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getMaxDownY, getTargetMapNameEn, target_map
 from map.proess_state import State
 from lib.discord_notifier import DiscordNotifier
 from lib.unseal_detector import UnsealDetector
 from lib.auto_skill import AutoSkillManager
-# 全域讀取設定
-with open('conf/config.json', 'r', encoding='utf-8') as f:
-    setting = json.load(f)
-
-# 是否使用自己角色頭部截圖
-IS_USE_ROLE_PIC = setting['is_use_role_pic']
-GAME_MAP = setting['game_map']
-ROLE_SPEED_SEC_PX = setting['role_speed_sec_px']
-MAIN_ATTACK_SKILL = setting['main_attack_skill']
-MAIN_SKILL_KEEP_TIME = setting['main_skill_keep_time']
-IS_FIND_MONSTER_CLOSER = setting['is_find_monster_closer']
-'''是否尋找較近的怪物 1:是 0:否'''
-IS_ENEMY_CHANGE_CHANNEL = setting['is_enemey_change_channel']
-IS_UNSEAL_CHANGE_CHANNEL = setting['is_unseal_change_channel']
-IS_UNSEAL_TRY = setting['is_unseal_try']
-IS_CLIMB = setting['is_climb']
-'''是否爬樓層 1:是 0:否'''
-ATTACK_RANGE = setting['attack_range']
-WEBHOOK_URL = setting['webhook_url']
-'''Auto Skill'''
-IS_AUTO_SKILL = setting['is_auto_skill']
-AUTO_SKILL_BUTTOM = setting['auto_skill_buttom'].split(",")
-AUTO_SKILL_INTERVAL = setting['auto_skill_interval']
-
-# 法師用
-MAIN_FLASH_SKILL = setting['main_flash_skill']
-IS_USE_FLASH_SKILL = setting['is_use_flash_skill']
-IS_WIZARD = setting['is_wizard']
 
 # 場景對應的模板圖片字典
 SCENE_TEMPLATES = {
@@ -106,13 +80,13 @@ def capture_screen(region):
 
 
 def find_monster (frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=THRESHOLD):
-    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
+    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_CONFIG.game_map])}'
     best_candidate = None
-    monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
+    monsterRegion = getMonsterRegion(REGION,target_map[GAME_CONFIG.game_map])
     # 找玩家
     if player_pos is None:
-        player_pos = find_player(REGION,monsterRegion,IS_USE_ROLE_PIC,SCENE_TEMPLATES)
-        
+        player_pos = find_player(REGION,monsterRegion,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)
+
     if not player_pos:
         print("❌ 無法取得玩家位置，停止比對")
         return None
@@ -133,7 +107,7 @@ def find_monster (frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=T
         res = cv2.matchTemplate(frame, template, cv2.TM_CCOEFF_NORMED)
         # min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-        result = find_best_match_near_center(res, player_x, player_y, getMonsterToleranceY(target_map[GAME_MAP]), template)
+        result = find_best_match_near_center(res, player_x, player_y, getMonsterToleranceY(target_map[GAME_CONFIG.game_map]), template)
         if result is None:
             print(f"❌ 未找到符合條件的匹配：{template_path}")
             continue  # 沒有找到符合條件的匹配
@@ -144,7 +118,7 @@ def find_monster (frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=T
         print(f"🔍 {os.path.basename(template_path)}  @ ({center_x}, {center_y}) player_y:{player_y}")
 
         # 判斷 Y 軸是否過遠
-        y_tolerance = getMonsterToleranceY(target_map[GAME_MAP])
+        y_tolerance = getMonsterToleranceY(target_map[GAME_CONFIG.game_map])
         dy = abs(center_y - player_y)
         # print(f"↕️ 與玩家 Y 差值 dy = {dy}")
         if dy > y_tolerance:
@@ -156,12 +130,12 @@ def find_monster (frame, player_pos=None, folder_path=MONSTERS_PATH, threshold=T
         print(f"📏 水平差距 dx = {dx}")
         if best_candidate is None:
             best_candidate = (center_x, center_y)
-            if IS_FIND_MONSTER_CLOSER == 0:
+            if GAME_CONFIG.is_find_monster_closer == 0:
                 return best_candidate
         elif dx < best_candidate[0] :
             # 找到更近的怪物（或匹配度更高）
             best_candidate = (center_x, center_y)
-            if IS_FIND_MONSTER_CLOSER == 0:
+            if GAME_CONFIG.is_find_monster_closer == 0:
                 return best_candidate
 
     if best_candidate:
@@ -200,7 +174,7 @@ def find_best_match_near_center(res, center_x, center_y, y_tolerance, template, 
     return match_x, match_y
 
 def monster_still_exist_nearby(frame, target_pos, folder_path=MONSTERS_PATH, tolerance=LOCK_TOLERANCE):
-    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
+    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_CONFIG.game_map])}'
     for template_path in glob.glob(os.path.join(folder_path, "*.png")):
         template = cv2.imread(template_path)
         if template is None:
@@ -234,7 +208,7 @@ def monster_still_exist_nearby(frame, target_pos, folder_path=MONSTERS_PATH, tol
 def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=30):
     normal_path = f'{folder_path}/normal'
     valuables_path = f'{folder_path}/valuables'
-    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_MAP])}'
+    folder_path = f'{folder_path}/{getTargetMapNameEn(target_map[GAME_CONFIG.game_map])}'
     folders = [folder_path,normal_path ,valuables_path]
     all_png_files = []
 
@@ -248,7 +222,7 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
         img = np.array(sct.grab(region))
         frame = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
 
-    player_pos = find_player(REGION,REGION,IS_USE_ROLE_PIC,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
+    player_pos = find_player(REGION,REGION,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
     if not player_pos:
         print("❌ 找不到角色位置，無法撿道具")
         return False
@@ -279,7 +253,7 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
                 direction = 'right' if dx > 0 else 'left'
                 print(f"🚶‍♂️ 移動方向：{direction}，靠近道具")
                 pyautogui.keyDown(direction)
-                time.sleep(min(3, abs(dx) / ROLE_SPEED_SEC_PX))  # 假設每秒 300px，調整距離
+                time.sleep(min(3, abs(dx) / GAME_CONFIG.role_speed_sec_px))  # 假設每秒 300px，調整距離
                 pyautogui.keyUp(direction)
                 # time.sleep(0.2)
             else:
@@ -289,10 +263,11 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
  
     print("🟡 畫面中未偵測到道具")
     return False
+
 def move_to_target(target_pos):
     target_x = target_pos[0]
     print(f"🔍 目標 X 座標：{target_x}")
-    player_pos = find_player(REGION,REGION,IS_USE_ROLE_PIC,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
+    player_pos = find_player(REGION,REGION,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
     if not player_pos:
         print("❌ 無法辨識角色位置，請確認模板圖與遊戲狀態")
         return
@@ -301,25 +276,25 @@ def move_to_target(target_pos):
     dy = player_pos[1] - target_pos[1]
     print(f"👣 當前位置: {player_x}, 差距: {dx}")
 
-    if abs(dx) > ATTACK_RANGE:
-        if IS_WIZARD == 1:
+    if abs(dx) > GAME_CONFIG.attack_range:
+        if GAME_CONFIG.is_use_flash_skill == 1:
             times = math.ceil(dx / 250)
             direction = 'right' if dx > 0 else 'left'
             for i in range(times):
                 if interruptEVent():
                     pyautogui.keyUp(direction)
-                    pyautogui.keyUp(MAIN_FLASH_SKILL)
+                    pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
                     return
                 pyautogui.keyDown(direction)
-                pyautogui.keyDown(MAIN_FLASH_SKILL)
+                pyautogui.keyDown(GAME_CONFIG.main_flash_skill)
                 if dy>60:
                     pyautogui.press('space')
                 time.sleep(0.5)  
                 pyautogui.keyUp(direction)
-                pyautogui.keyUp(MAIN_FLASH_SKILL)
+                pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
         else:
             times = 10
-            duration = min(3, abs(abs(dx)-ATTACK_RANGE) / ROLE_SPEED_SEC_PX)
+            duration = min(3, abs(abs(dx)-GAME_CONFIG.attack_range) / GAME_CONFIG.role_speed_sec_px)  # 最長不超過3秒
             timesSec = duration/times
             direction = 'right' if dx > 0 else 'left'
             for i in range(times):
@@ -352,20 +327,30 @@ def move_to_target(target_pos):
     
 def attack():
     print("========== 攻擊目標 =========")
-    pyautogui.keyDown(MAIN_ATTACK_SKILL)
-    time.sleep(MAIN_SKILL_KEEP_TIME)
-    pyautogui.keyUp(MAIN_ATTACK_SKILL)
-        
+    pyautogui.keyDown(GAME_CONFIG.main_attack_skill)
+    time.sleep(GAME_CONFIG.main_skill_keep_time)
+    pyautogui.keyUp(GAME_CONFIG.main_attack_skill)
+
 
 def attacAction():
     '''攻擊行為流程'''
+    target_pos = None
     while True:
         if interruptEVent():
             return
-        monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
+        monsterRegion = getMonsterRegion(REGION,target_map[GAME_CONFIG.game_map])
         frame = capture_screen(monsterRegion)
         cv2.imwrite("monsterRegion.png", frame)
-
+        if target_pos:
+            # 檢查原目標是否還在
+            if monster_still_exist_nearby(frame, target_pos):
+                attack()
+                continue
+            else:
+                print("☠️ 怪物消失，釋放目標")
+                target_pos = None
+                return State.PICK_ITEM
+                
         # 搜尋新怪物
         new_pos = find_monster(frame)
         if new_pos:
@@ -373,9 +358,9 @@ def attacAction():
             print(f"🎯 鎖定新怪物：{target_pos}")
             move_to_target(target_pos)
             attack()    
-            return 'pickup'
         else:
-            return 'move_up_or_down'
+            return State.MOVE_UP_OR_DOWN
+
 
 def loopAction():
     '''循環行為'''
@@ -390,25 +375,25 @@ def loopAction():
         if direction[1] is True:
             print(f"玩家在邊緣，方向：{direction[0]}, dx < 100 {direction[1]}")
             times = 15
-        pyautogui.keyDown(MAIN_ATTACK_SKILL)
+        pyautogui.keyDown(GAME_CONFIG.main_attack_skill)
         for i in range(times):
             if interruptEVent():
                 pyautogui.keyUp(direction[0])
-                pyautogui.keyUp(MAIN_FLASH_SKILL)
-                pyautogui.keyUp(MAIN_ATTACK_SKILL)
+                pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
+                pyautogui.keyUp(GAME_CONFIG.main_attack_skill)
                 return
             tempdirection = direction[0]
             if i % 5 == 0:
                 tempdirection = anotherDirection(direction[0])
                 
             print("========== 攻擊目標 =========")
-            pyautogui.keyDown(MAIN_FLASH_SKILL)
+            pyautogui.keyDown(GAME_CONFIG.main_flash_skill)
             pyautogui.keyDown(tempdirection)
             time.sleep(0.2)  
             pyautogui.keyUp(tempdirection)
-            pyautogui.keyUp(MAIN_FLASH_SKILL)
+            pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
             time.sleep(0.6)
-        pyautogui.keyUp(MAIN_ATTACK_SKILL)
+        pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
 
 def anotherDirection(direction):
     if direction == 'left':
@@ -420,10 +405,10 @@ def checkPlayerAtLeftOrRight():
     '''檢查玩家往哪邊移動'''
     result = None
     leftOrRight = None
-    monsterRegion = getMonsterRegion(REGION,target_map[GAME_MAP])
+    monsterRegion = getMonsterRegion(REGION,target_map[GAME_CONFIG.game_map])
     # 找玩家
-    
-    player_pos = find_player_and_center(REGION,monsterRegion,IS_USE_ROLE_PIC,SCENE_TEMPLATES)
+
+    player_pos = find_player_and_center(REGION,monsterRegion,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)
     if not player_pos:
         print("❌ 無法取得玩家位置")
         return None
@@ -453,148 +438,12 @@ def checkPlayerAtLeftOrRight():
         return (leftOrRight,result )
 
 
-def tryUnseal():
-    '''嘗試解輪'''
-
-    all_unseal_templates = []
-    template_keys = []  
-    template_ps = []
-    for template_path in glob.glob(os.path.join("pic/unseal/press", "*.png")):
-        template_ps.append(template_path)
-        template = cv2.imread(template_path)
-        if template is None:
-            print(f"❌ 無法讀取模板圖：{template_path}")
-            continue
-        all_unseal_templates.append(template)
-
-        # get names (up, down, left, right)
-        filename = os.path.basename(template_path).lower()
-        if 'up' in filename:
-            template_keys.append('up')
-        elif 'down' in filename:
-            template_keys.append('down')
-        elif 'left' in filename:
-            template_keys.append('left')
-        elif 'right' in filename:
-            template_keys.append('right')
-        else:
-            template_keys.append('unknown') 
-
-
-    if move_to_unseal_position(all_unseal_templates, max_attempts=30, tolerance=35):
-        print("🔓 嘗試解輪中...")
-        # sprint 4 parts 
-        all_segments = []
-        segment = UNSEAL_MGR.get_sgements()
-        for i, seg in enumerate(segment):
-            cropped = capture_screen(seg)
-            print(f"Segment {i+1} captured: {seg}")
-            all_segments.append(cropped)
-             # save segment_1.png, segment_2.png ...
-            cv2.imwrite(f"segment_{i+1}.png", cropped) 
-
-            found = False
-            presskey = ''
-            for idx, template in enumerate(all_unseal_templates):
-                res = cv2.matchTemplate(cropped, template, cv2.TM_CCOEFF_NORMED)
-                _, max_val, _, _ = cv2.minMaxLoc(res)
-                # print(f"Segment {i+1} {template_ps[idx]} 模板 {template_keys[idx]} 匹配值 = {max_val:.3f}")
-            
-                best_match_val = 0                
-                if max_val >= 0.75 and max_val > best_match_val:
-                    best_match_val = max_val
-                    presskey = template_keys[idx]
-                    print(f"✅ 偵測到解輪圖示：{template_keys[idx]} (segment {i+1})")
-
-            if presskey != '':
-                found = True
-                pyautogui.press(presskey)
-                time.sleep(2)  # 等待按鍵反應
-                    
-            if not found:
-                print(f"❌ 未偵測到解輪圖示 (segment {i+1})，請確認模板圖與遊戲狀態")
-                NOTIFIER_MGR.send(f'❌ 未偵測到解輪圖示 (segment {i+1})，請確認模板圖與遊戲狀態')
-                return False
-        time.sleep(2)  # 等待解輪動畫開始
-        print("🔓 等待解輪動畫結束...")
-        if UNSEAL_MGR.check_usseal_window(all_unseal_templates):
-            print("❌ 解輪動畫未正確顯示，請確認遊戲狀態")
-            NOTIFIER_MGR.send('❌ 解輪動畫未正確顯示，請確認遊戲狀態')
-            return False
-        else:
-            print("🔓 解輪完成，等待動畫結束...")    
-            return True
-    else:
-        print("❌ 無法到達解輪位置")
-        NOTIFIER_MGR.send('❌ 無法到達解輪位置')
-        return False
-
-
-def move_to_unseal_position(all_unseal_templates, max_attempts, tolerance):
-    attempts = 0
-    while attempts < max_attempts:
-
-        unseal_position = UNSEAL_MGR.unseal_position()
-        target_x, target_y = unseal_position
-        if target_x is None or unseal_position is None:
-            print("❌ 無法取得解輪位置")
-            return False
-
-        player_pos = find_player(REGION, REGION, IS_USE_ROLE_PIC, SCENE_TEMPLATES)
-        if not player_pos:
-            print("❌ 無法辨識角色位置，請確認模板圖與遊戲狀態")
-            return False
-
-        player_x, player_y = player_pos
-        print(f"👤 當前角色位置: ({player_x}, {player_y})")
-        dx = target_x - player_x
-        dy = target_y - player_y
-
-        print(f"👣 當前位置: ({player_x}, {player_y}), 目標位置: ({target_x}, {target_y}), 差距: ({dx}, {dy})")
-
-        if abs(dy) > 300:
-            print("❌ Y 差距過大，無法精準到達目標")
-            NOTIFIER_MGR.send('❌ Y 差距過大，無法精準到達目標')
-            return False
-
-        # 判斷是否已經在容差範圍內
-        if abs(dx) <= tolerance:
-            print("✅ 已到達目標點")
-            pyautogui.press('up')
-            # wait for the unseal animation
-            time.sleep(1)
-            if UNSEAL_MGR.check_usseal_window(all_unseal_templates):
-                return True
-
-
-
-        # 判斷移動方向
-        if abs(dx) > tolerance:
-            direction = 'right' if dx > 0 else 'left'
-            if abs(dx) > 300:
-                pyautogui.keyDown(direction)
-                time.sleep(2)
-                pyautogui.keyUp(direction)
-            else:
-                # 如果 Y 差距小於 150，則只按方向鍵
-                pyautogui.keyDown(direction)
-                time.sleep(0.05)
-                pyautogui.keyUp(direction)
-
-        attempts += 1
-        print(f"🔄 嘗試次數: {attempts}/{max_attempts}")
-
-        
-
-    print("⚠️ 超過最大嘗試次數，未能精準到達目標")
-    return False
-
 
 def interruptEVent():
     '''停止流程的重要中斷'''
-    if ( (UNSEAL_MGR.is_unseal_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1) 
-        or (UNSEAL_MGR.is_exp_stop_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1) 
-        or (MINI_MAP_ENEMY_MGR.is_enemy_detected() and IS_ENEMY_CHANGE_CHANNEL==1) 
+    if ( (UNSEAL_MGR.is_unseal_detected() and GAME_CONFIG.is_unseal_change_channel == 1) 
+        or (UNSEAL_MGR.is_exp_stop_detected() and GAME_CONFIG.is_unseal_change_channel == 1) 
+        or (MINI_MAP_ENEMY_MGR.is_enemy_detected() and GAME_CONFIG.is_enemey_change_channel == 1) 
         or MINI_MAP_ENEMY_MGR.is_stuck()
         ):
         return True
@@ -605,15 +454,17 @@ def changeState(STATE:State):
     GAME_STATE = STATE
     # ✅ 如果解輪被偵測到，就等解除
 
-    if GAME_STATE == State.CHANGE_CHANNEL:
+    if (time.time() - GAME_CONFIG.start_time) > GAME_CONFIG.max_runtime_sec and GAME_CONFIG.is_runtime_logout == 1:
+        GAME_STATE = State.GAME_LOGOUT
+    elif GAME_STATE == State.CHANGE_CHANNEL:
         return
-    elif UNSEAL_MGR.is_exp_stop_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1:
+    elif UNSEAL_MGR.is_exp_stop_detected() and GAME_CONFIG.is_unseal_change_channel == 1:
         NOTIFIER_MGR.send('❗️ 偵測到經驗停止，切換頻道')
         GAME_STATE = State.CHANGE_CHANNEL
-    elif UNSEAL_MGR.is_unseal_detected() and IS_UNSEAL_CHANGE_CHANNEL == 1:
+    elif UNSEAL_MGR.is_unseal_detected() and GAME_CONFIG.is_unseal_change_channel == 1:
         GAME_STATE = State.CHANGE_CHANNEL
-    elif (MINI_MAP_ENEMY_MGR.is_enemy_detected() and IS_ENEMY_CHANGE_CHANNEL==1):
-        GAME_STATE = State.CHANGE_CHANNEL          
+    elif (MINI_MAP_ENEMY_MGR.is_enemy_detected() and GAME_CONFIG.is_enemey_change_channel == 1):
+        GAME_STATE = State.CHANGE_CHANNEL
     elif MINI_MAP_ENEMY_MGR.is_stuck():
         NOTIFIER_MGR.send('❗️ 偵測到黃點異常，卡住切換頻道')
         GAME_STATE = State.CHANGE_CHANNEL
@@ -628,13 +479,13 @@ def main():
             case State.INIT:
                 changeState(State.ATTACK_ACTION)
             case State.ATTACK_ACTION:
-                if IS_WIZARD == 1:
+                if loopAction == 1:
                     loopAction()
                     changeState(State.ATTACK_ACTION)
                 else:
                     print("🔍 尋找怪物...")
                     endState =  attacAction()
-                    if endState == 'move_up_or_down' and IS_CLIMB:
+                    if endState == State.MOVE_UP_OR_DOWN and GAME_CONFIG.is_climb:
                         changeState(State.MOVE_UP_OR_DOWN)
                     else:
                         changeState(State.PICK_ITEM)
@@ -642,8 +493,7 @@ def main():
                 find_and_pick_item(REGION)
                 changeState(State.ATTACK_ACTION)
             case State.MOVE_UP_OR_DOWN:
-                if MINI_MAP_ENEMY_MGR.is_reach_top_by_template(0.75, getMaxTopY(target_map[GAME_MAP])):
-                                    
+                if MINI_MAP_ENEMY_MGR.is_reach_top_by_template(0.75, getMaxTopY(target_map[GAME_CONFIG.game_map])):
                     print("------準備下去-------")
                     pyautogui.keyUp('up')
                     for i in range(1):
@@ -658,8 +508,8 @@ def main():
 
                 else:
                     find_player_in_minimap_callback = partial(MINI_MAP_ENEMY_MGR.get_yellow_dot_pos_in_minmap, 0.7)
-                    player_pos = find_player(REGION, REGION, IS_USE_ROLE_PIC, SCENE_TEMPLATES)
-                    is_climb_ok = FLOOR_MOVEMENT.climb_rope(player_pos, find_player_in_minimap_callback)
+                    player_pos = find_player(REGION, REGION, GAME_CONFIG.is_use_role_pic, SCENE_TEMPLATES)
+                    is_climb_ok = FLOOR_MOVEMENT.climb_rope(player_pos,find_player_in_minimap_callback,getClimbTargets(target_map[GAME_CONFIG.game_map]))
                     if is_climb_ok:
                         attack()
                 changeState(State.ATTACK_ACTION)
@@ -677,33 +527,21 @@ def main():
                 time.sleep(4)
                 pyautogui.keyUp('right')
                 changeState(State.ATTACK_ACTION)
-            case State.UNSEAL_TRY:
-                UNSEAL_MGR.set_send_discord(False)  # 停止發送解輪通知
-                MINI_MAP_ENEMY_MGR.switch_check_stuck()  # 停止黃點移動偵測
-                if UNSEAL_MGR.is_unseal_detected():
-                    NOTIFIER_MGR.send('🔓 嘗試解輪中...')
-                    print("🔓 嘗試解輪中...")
-                    if tryUnseal():
-                        NOTIFIER_MGR.send('✅ 解輪成功，返回ATTACK_ACTION狀態')
-                        print("✅ 解輪成功，返回ATTACK_ACTION狀態")
-                        UNSEAL_MGR.reset()
-                        changeState(State.ATTACK_ACTION)
-                    else:
-                        print("❌ 解輪失敗，切換頻道") 
-                        NOTIFIER_MGR.send('❌ 解輪失敗，切換頻道')
-                        changeState(State.CHANGE_CHANNEL)
-                else:
-                    print("❌ 解輪未被偵測到，返回初始狀態")
-                    changeState(State.ATTACK_ACTION)
-                UNSEAL_MGR.set_send_discord(True)
-                MINI_MAP_ENEMY_MGR.switch_check_stuck()  # 恢復黃點移動偵測
+            case State.GAME_LOGOUT:
+                UI_CONTRO_MGR.logout()
+                NOTIFIER_MGR.send('===== 休息時間到了，登出並停止運行 =====')
+                sys.exit()
 
 # ---------- 執行 ----------
 if __name__ == "__main__":
     REGION = get_game_region()
     GAME_STATE = State.INIT
+
+    # Config 資料管理
+    GAME_CONFIG = GameConfig()
+
     # #通知管理
-    NOTIFIER_MGR = DiscordNotifier(WEBHOOK_URL)
+    NOTIFIER_MGR = DiscordNotifier(GAME_CONFIG.webhook_url, GAME_CONFIG.role_prefix_name)
 
     # # 背景監聽解輪
     UNSEAL_MGR = UnsealDetector(REGION,UNSEAL_TEMPLATE_PATH)
@@ -711,16 +549,16 @@ if __name__ == "__main__":
     UNSEAL_MGR.start()
     
     # # 自動施放技能
-    AUTO_SKILL_MGR = AutoSkillManager(AUTO_SKILL_BUTTOM,AUTO_SKILL_INTERVAL)
-    if IS_AUTO_SKILL == 1:
+    AUTO_SKILL_MGR = AutoSkillManager(GAME_CONFIG.auto_skill_buttom, GAME_CONFIG.auto_skill_interval)
+    if GAME_CONFIG.is_auto_skill == 1:
         AUTO_SKILL_MGR.start()
     
 
     # 🔍 小地圖區域（需要你手動確認）
     is_ememy_check = False
-    if IS_ENEMY_CHANGE_CHANNEL == 1 :
+    if GAME_CONFIG.is_enemey_change_channel == 1 :
         is_ememy_check = True
-    MINIMAP_REGION = getMinimapRegion(REGION,target_map[GAME_MAP])
+    MINIMAP_REGION = getMinimapRegion(REGION,target_map[GAME_CONFIG.game_map])
     MINI_MAP_ENEMY_MGR = MinimapEnemyDetector(MINIMAP_REGION,0.3,True,is_ememy_check)
     MINI_MAP_ENEMY_MGR.rigesterMgr(NOTIFIER_MGR)
     MINI_MAP_ENEMY_MGR.start()
@@ -729,10 +567,10 @@ if __name__ == "__main__":
     UI_CONTRO_MGR = ChannelManager(REGION)
 
     # 上下樓層控制
-    FLOOR_MOVEMENT = LadderClimber(REGION, target_map[GAME_MAP],ROLE_SPEED_SEC_PX,interrupt_callback=interruptEVent)
+    FLOOR_MOVEMENT = LadderClimber(REGION, target_map[GAME_CONFIG.game_map],GAME_CONFIG.role_speed_sec_px,interrupt_callback=interruptEVent)
     
     # print config
-    print(f"設定: {setting}")
+    print(f"設定: {GAME_CONFIG}")
 
     # testloop()
     main()

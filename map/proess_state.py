@@ -10,3 +10,4 @@ class State(Enum):
     MOVE_UP_OR_DOWN = auto()
     CHANGE_CHANNEL = auto()
     UNSEAL_TRY = auto()
+    GAME_LOGOUT = auto()

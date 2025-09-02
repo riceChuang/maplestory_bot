@@ -12,7 +12,17 @@ class LadderClimber:
         self.role_speed_sec_px = role_speed_sec_px
         self.interrupt_callback = interrupt_callback
     
-    def climb_rope(self,player_pos, find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]]):
+
+
+    def climb_rope(self, player_pos, find_player_in_minimap_fun: Callable[[dict[str, int]], Optional[Tuple[int, int]]], targets):
+        match self.game_map:
+            case "黑森林狩獵場二":
+                self.move_towards_target(find_player_in_minimap_fun, targets)
+            case _:
+                return self.climb_with_photo(player_pos, find_player_in_minimap_fun)
+
+
+    def climb_with_photo(self,player_pos, find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]]):
         player_pos = player_pos
         if not player_pos:
             print("❌ 無法取得角色位置")
@@ -84,3 +94,57 @@ class LadderClimber:
         if is_climb_ok:
             pyautogui.keyUp('up')
         return is_climb_ok
+    
+
+    def move_towards_target(self,find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]], targets):
+        """
+        移動到最接近的合法目標點 (Y差30內 + X最近)
+        :param get_player_pos: function -> 回傳當前玩家小地圖座標 (x, y)
+        :param targets: list of tuple -> [(x1, y1), (x2, y2), ...]
+        :return: 最終到達的目標點 (x, y) 或 None
+        """
+        # 到達目標
+        isArrive = False
+        # 回傳當前玩家座標 (x, y)
+        player_x, player_y = find_player_in_minimap_fun()
+        #  Y軸允許的差距
+        y_tolerance = 5
+        # 篩選出符合Y軸條件的目標
+        valid_targets = [t for t in targets if abs(t[1] - player_y) <= y_tolerance]
+        if not valid_targets:
+            print("❌ 沒有符合條件的目標")
+            return None
+        # 找出X軸最近的
+        target = min(valid_targets, key=lambda t: abs(t[0] - player_x))
+        print(f"🎯 選中目標: {target}")
+        while True:
+            player_x, player_y = find_player_in_minimap_fun()
+            print(f"🧍 玩家當前位置: ({player_x}, {player_y})")
+
+            # 判斷是否已經到達
+            dx = target[0] - player_x
+            # 移動 (這裡你可以換成實際的按鍵事件)
+            direction = 'right' if dx > 0 else 'left'
+            if abs(dx) <= 5:
+                print(f"✅ 到達目標 {target}")
+                time.sleep(0.05)
+                pyautogui.keyDown('up')
+                time.sleep(0.05)
+                pyautogui.press('space')  # 跳一下
+                isArrive = True
+            elif abs(dx) <= 15:
+                print(f"✅ 到達目標 {target}")
+                time.sleep(0.05)
+                pyautogui.keyDown('up')
+                time.sleep(0.05)
+                pyautogui.keyDown(direction)
+                pyautogui.press('space')  # 跳一下
+                isArrive = True
+            if isArrive:
+                pyautogui.keyUp('right')
+                pyautogui.keyUp('left')
+                return
+           
+            print(f"👉 向 {direction} 移動")
+            pyautogui.keyDown(direction)
+            time.sleep(0.1)

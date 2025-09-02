@@ -1,4 +1,6 @@
 import cv2
+import glob
+import os
 import numpy as np
 import mss
 import time
@@ -152,28 +154,6 @@ class MinimapEnemyDetector(threading.Thread):
             print(f"❌ 爬繩子匹配失敗， 最大匹配度：{max_val:.4f}")
             return False    
 
-
-    def get_yellow_dot_pos_in_minmap(self,threshold=0.75, debug=False):
-        '''取得小黃點在地圖座標'''
-        minimap_img = self.capture_minimap()
-        cv2.imwrite('minimap.png', minimap_img)
-        yellow_template = cv2.imread("pic/sys_ui/yellow_dot.png")
-        result = cv2.matchTemplate(minimap_img, yellow_template, cv2.TM_CCOEFF_NORMED)
-        min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-        if max_val >= threshold:
-            center_x = max_loc[0] + yellow_template.shape[1] // 2
-            center_y = max_loc[1] + yellow_template.shape[0] // 2
-
-            if debug:
-                cv2.circle(minimap_img, (center_x, center_y), 4, (0, 255, 0), -1)
-                cv2.imshow("Match Debug", minimap_img)
-                cv2.waitKey(1)
-
-            print(f"📍 黃點匹配成功 @ ({center_x}, {center_y})，匹配度：{max_val:.4f}")
-            return (center_x,center_y)
-        else:
-            # print(f"❌ 匹配失敗，最大匹配度：{max_val:.4f}")
-            return None
         
     def _check_stuck(self):
         '''內部方法：檢查小黃點是否卡住（沒移動）'''
@@ -194,3 +174,49 @@ class MinimapEnemyDetector(threading.Thread):
             elif now - self._last_move_time > self._stuck_timeout:
                 print("⚠️ 小黃點位置停留過久，判定為卡住")
                 self._stuck_event.set()
+
+        
+    def get_yellow_dot_pos_in_minmap(self,threshold=0.8, debug=False):
+        '''取得小黃點在地圖座標'''
+        minimap_img = self.capture_minimap()
+        cv2.imwrite('minimap.png', minimap_img)
+        folder_path = "pic/sys_ui/yellow_dot"
+        templates = glob.glob(os.path.join(folder_path, "*.png"))
+        if not templates:
+            print(f"⚠️ 無圖片於：{folder_path}")
+            return None
+
+        best_match_val = 0
+        best_match_loc = None
+        best_template_size = None
+        best_template_path = None
+
+        for tpl_path in templates:
+            template = cv2.imread(tpl_path)
+            if template is None:
+                print(f"❌ 無法讀取模板圖：{tpl_path}")
+                continue
+
+            result = cv2.matchTemplate(minimap_img, template, cv2.TM_CCOEFF_NORMED)
+            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
+
+            if max_val > best_match_val:
+                best_match_val = max_val
+                best_match_loc = max_loc
+                best_template_size = template.shape[:2]  # (height, width)
+                best_template_path = tpl_path
+
+        # 取得中心點
+        if best_match_val >= threshold and best_match_loc is not None:
+            h, w = best_template_size
+            center_x = best_match_loc[0] + w // 2
+            center_y = best_match_loc[1] + h // 2
+            if debug:
+                cv2.circle(minimap_img, (center_x, center_y), 4, (0, 255, 0), -1)
+                cv2.imshow("Match Debug", minimap_img)
+                cv2.waitKey(1)
+            print(f"📍 黃點匹配成功 @ ({center_x}, {center_y})，匹配度：{best_match_val:.4f}")
+            return (center_x, center_y)
+        else:
+            print(f"❌ 所有模板匹配失敗，最大匹配度：{best_match_val:.4f}")
+            return None

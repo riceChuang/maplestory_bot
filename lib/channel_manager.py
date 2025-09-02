@@ -198,3 +198,65 @@ class ChannelManager:
                     self.changeState(State.CHECK_CURRENT_SCENE)
             elif self.uistate == State.FINISH_CNAGE_CANNEL:
                 return
+            
+    def logout(self):
+        self.changeState(State.CHECK_CURRENT_SCENE)
+        while True:
+            if self.uistate == State.CHECK_CURRENT_SCENE:
+                # 判斷目前狀態
+                pos = self._match_template("catalog_btn")
+                if pos:
+                    self.changeState(State.CLICK_CATALOG)
+                pos = self._match_template("login_btn")
+                if pos:
+                    self.changeState(State.FINISH_CNAGE_CANNEL)
+            elif self.uistate == State.CLICK_CATALOG:
+                pos = self._match_template("catalog_btn")
+                if pos:
+                    self.moveToclick(pos[0],pos[1])
+                    pos = self._wait_until_scene_found('channel_btn')
+                    if pos:
+                        self.changeState(State.CLICK_CHANNEL)
+                    else:
+                        self.changeState(State.CHECK_CURRENT_SCENE)
+                else:        
+                    self.changeState(State.CHECK_CURRENT_SCENE)
+
+            elif self.uistate == State.CLICK_CHANNEL:
+                pos = self._match_template("channel_btn")
+                if pos:
+                    self.moveToclick(pos[0],pos[1])
+                    pos = self._wait_until_scene_found('random_btn')
+                    if pos:
+                        self.changeState(State.CLICK_RANDOM_BTN)
+                    else:
+                        self.changeState(State.CHECK_CURRENT_SCENE)
+                else:        
+                    self.changeState(State.CHECK_CURRENT_SCENE)
+
+            elif self.uistate == State.CLICK_RANDOM_BTN:
+                pos = self._match_template("random_btn")
+                if pos:
+                    self.moveToclick(pos[0],pos[1])
+                    pos = self._wait_until_scene_found('correct_btn')
+                    if pos:
+                        self.changeState(State.CLICK_CORRECT_BTN)
+                    else:
+                        self.changeState(State.CHECK_CURRENT_SCENE)
+                else:        
+                    self.changeState(State.CHECK_CURRENT_SCENE)
+
+            elif self.uistate == State.CLICK_CORRECT_BTN:
+                pos = self._match_template("correct_btn")
+                if pos:
+                    self.moveToclick(pos[0],pos[1])
+                    pos = self._wait_until_scene_found('login_btn',0.6,0.5,60)
+                    if pos:
+                        self.changeState(State.FINISH_CNAGE_CANNEL)
+                    else:
+                        self.changeState(State.CHECK_CURRENT_SCENE)
+                else:
+                    self.changeState(State.CHECK_CURRENT_SCENE)
+            
+            elif self.uistate == State.FINISH_CNAGE_CANNEL:
+                return

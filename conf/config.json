@@ -19,17 +19,21 @@
     "is_enemey_change_channel": 1,
     "is_unseal_change_channell_comment": "是否出現解輪就換頻 1:是 0:否",
     "is_unseal_change_channel": 1,
-    "is_unseal_try_comment": "是否嘗試解輪 1:是 0:否",
-    "is_unseal_try": 0,
     "webhook_url_comment": "訊息通知到DC",
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
+    "role_prefix_name_comment": "通知DC的角色名稱前綴",
+    "role_prefix_name": "同花打得過fullhouse",
+    
+    "is_runtime_logout_comment": "是否啟用運行時登出（1:是，0:否）",
+    "is_runtime_logout": 1,
+    "max_runtime_sec_comment": "最大運行時間（秒）",
+    "max_runtime_sec": 10,
 
+    
     "sprite_line": "法師--------------------------------------------------------------------------------",
-
+    "loop_action": 0,
     "main_flash_skill_comment": "主要法師閃現技能",
     "main_flash_skill": "f",
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
-    "is_use_flash_skill": 1,
-    "is_wizard_comment": "是否為法師 1:是 ,0:否",
-    "is_wizard": 1
+    "is_use_flash_skill": 1
 }
