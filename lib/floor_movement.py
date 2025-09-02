@@ -12,15 +12,11 @@ class LadderClimber:
         self.role_speed_sec_px = role_speed_sec_px
         self.interrupt_callback = interrupt_callback
     
-
-
     def climb_rope(self, player_pos, find_player_in_minimap_fun: Callable[[dict[str, int]], Optional[Tuple[int, int]]], targets):
-        match self.game_map:
-            case "黑森林狩獵場二":
-                self.move_towards_target(find_player_in_minimap_fun, targets)
-            case _:
-                return self.climb_with_photo(player_pos, find_player_in_minimap_fun)
-
+        if len(targets) != 0:
+            self.move_towards_target(find_player_in_minimap_fun, targets)
+        else:
+            return self.climb_with_photo(player_pos, find_player_in_minimap_fun)
 
     def climb_with_photo(self,player_pos, find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]]):
         player_pos = player_pos

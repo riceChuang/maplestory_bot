@@ -1,4 +1,5 @@
 from enum import Enum, auto
+from unittest import case
 
 
 class target_map(Enum):
@@ -11,6 +12,7 @@ class target_map(Enum):
     東方岩石路火肥肥 = auto()
     石人寺院門外 = auto()
     空屋 = auto()
+    時間之路一 = auto()
 
 def getTargetMapNameEn(target:target_map):
     '''取得怪物圖片路徑'''
@@ -33,6 +35,8 @@ def getTargetMapNameEn(target:target_map):
             path = 'Stone_Door'
         case target_map.空屋:
             path = 'Empty_House'
+        case target_map.時間之路一:
+            path = 'Time_Road_One'
     return path
 
 def getMinimapRegion(region,target:target_map):
@@ -55,7 +59,9 @@ def getMinimapRegion(region,target:target_map):
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 228, 'height': 146}
         case target_map.空屋:
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 235, 'height': 157}
-            
+        case target_map.時間之路一:
+            minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 227, 'height': 174}
+
     return minimap_region
 
 def getMonsterRegion(region,target:target_map):
@@ -78,7 +84,9 @@ def getMonsterRegion(region,target:target_map):
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 470, 'width': region['width'], 'height': 400}
         case target_map.空屋:
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 394, 'width': region['width'], 'height': 400}
-        
+        case target_map.時間之路一:
+            minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 387, 'width': region['width'], 'height': 450}
+
     return minimap_region
 
 def getMaxTopY(target:target_map):
@@ -101,6 +109,8 @@ def getMaxTopY(target:target_map):
             max_y = 95
         case target_map.空屋:
             max_y = 112
+        case target_map.時間之路一:
+            max_y = 69
     return max_y
 
 def getMaxDownY(target:target_map):
@@ -130,11 +140,18 @@ def getMonsterToleranceY(target:target_map):
             toleranceY = 250
         case target_map.空屋:
             toleranceY = 200
+        case target_map.時間之路一:
+            toleranceY = 197
     return toleranceY
 
 def getClimbTargets(target:target_map):
     '''取得攀爬的目標點'''
     targets = []
-    if target == target_map.黑森林狩獵場二:
-        targets = [(54,61),(149,61),(44,82),(150,103),(97,131),(40,152),(202,173),(141,173),(114,173),(80,173)]
+    match target:
+        case target_map.黑森林狩獵場二:
+            targets = [(54,61),(149,61),(44,82),(150,103),(97,131),(40,152),(202,173),(141,173),(114,173),(80,173)]            
+        case target_map.時間之路一:
+            targets = [(54,146),(124,146),(89,115),(23,115),(55,86)]
+        
+        
     return targets

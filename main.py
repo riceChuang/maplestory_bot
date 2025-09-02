@@ -277,8 +277,10 @@ def move_to_target(target_pos):
     print(f"👣 當前位置: {player_x}, 差距: {dx}")
 
     if abs(dx) > GAME_CONFIG.attack_range:
+        print(f"🚶‍♂️ 角色與目標距離過遠，開始移動，dx={dx}, dy={dy}")
         if GAME_CONFIG.is_use_flash_skill == 1:
-            times = math.ceil(dx / 250)
+            times = abs(math.ceil(dx / 450))
+            print(f"🚀 使用位移技能，預計次數: {times}")
             direction = 'right' if dx > 0 else 'left'
             for i in range(times):
                 if interruptEVent():
@@ -287,8 +289,6 @@ def move_to_target(target_pos):
                     return
                 pyautogui.keyDown(direction)
                 pyautogui.keyDown(GAME_CONFIG.main_flash_skill)
-                if dy>60:
-                    pyautogui.press('space')
                 time.sleep(0.5)  
                 pyautogui.keyUp(direction)
                 pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
@@ -345,6 +345,7 @@ def attacAction():
         if target_pos:
             # 檢查原目標是否還在
             if monster_still_exist_nearby(frame, target_pos):
+                move_to_target(target_pos)
                 attack()
                 continue
             else:
@@ -496,8 +497,8 @@ def main():
             case State.MOVE_UP_OR_DOWN:
                 if MINI_MAP_ENEMY_MGR.is_reach_top_by_template(0.75, getMaxTopY(target_map[GAME_CONFIG.game_map])):
                     print("------準備下去-------")
-                    pyautogui.keyUp('up')
-                    for i in range(1):
+                    pyautogui.keyUp('up') ## BUG上樓梯完要清除
+                    for i in range(4):
                         pyautogui.keyDown('down')
                         pyautogui.keyDown('right')
                         time.sleep(0.1)
@@ -506,13 +507,15 @@ def main():
                         pyautogui.keyUp('down')
                         pyautogui.keyUp('right')
                         time.sleep(0.3) 
-
+                    time.sleep(3)
                 else:
                     find_player_in_minimap_callback = partial(MINI_MAP_ENEMY_MGR.get_yellow_dot_pos_in_minmap, 0.7)
                     player_pos = find_player(REGION, REGION, GAME_CONFIG.is_use_role_pic, SCENE_TEMPLATES)
                     is_climb_ok = FLOOR_MOVEMENT.climb_rope(player_pos,find_player_in_minimap_callback,getClimbTargets(target_map[GAME_CONFIG.game_map]))
                     if is_climb_ok:
+                        pyautogui.keyUp('up') ## BUG上樓梯完要清除
                         attack()
+                    time.sleep(1)
                 changeState(State.ATTACK_ACTION)
             case State.CHANGE_CHANNEL:
                 UNSEAL_MGR.pause_exp_monitor()
