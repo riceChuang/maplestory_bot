@@ -4,16 +4,18 @@ import cv2
 import mss
 import numpy as np
 
-def find_player(region,monsterRegion,is_user_role_pic,scene_templates):
+def find_player(region, monsterRegion, is_user_role_pic, scene_templates):
     with mss.mss() as sct:
         img = np.array(sct.grab(monsterRegion))
         screenshot = cv2.cvtColor(img, cv2.COLOR_BGRA2BGR)
         cv2.imwrite("player.png", screenshot) 
+
         if is_user_role_pic:
-            template_folder = f"pic/role"  # 自訂路徑
+            template_folder = "pic/role"  # 自訂路徑
             templates = glob.glob(os.path.join(template_folder, "*.png"))
         else:
             templates = scene_templates["blood"]
+
         threshold = 0.5
         best_match_val = 0
         best_match_x = None
@@ -29,18 +31,17 @@ def find_player(region,monsterRegion,is_user_role_pic,scene_templates):
             res = cv2.matchTemplate(screenshot, template, cv2.TM_CCOEFF_NORMED)
             min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(res)
 
-            # print(f"🔍 {tpl_path} 最大匹配度：{max_val:.4f} @ {max_loc}")
-            print(region['left'] ,region['top'])
+            print(f"🔍 {tpl_path} 最大匹配度：{max_val:.4f} @ {max_loc}")
+            print(region['left'], region['top'])
+
+            # 更新最佳結果，但不馬上 return
             if max_val >= threshold and max_val > best_match_val:
                 best_match_val = max_val
-                best_match_x = max_loc[0] + region['left']+template.shape[1] // 2
+                best_match_x = max_loc[0] + region['left'] + template.shape[1] // 2
                 best_match_y = max_loc[1] + region['top'] + template.shape[0] // 2
-                # 測試偵測的位置是否正確
-                # moveToclick(best_match_x,max_loc[1])
-                # 找到就離開
-                return (best_match_x, best_match_y)
+                return (best_match_x, best_match_y) 
 
-
+        # 迴圈結束後，回傳最佳結果（可能是 None）
         if best_match_x is not None:
             return (best_match_x, best_match_y)
 

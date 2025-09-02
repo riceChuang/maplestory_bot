@@ -4,13 +4,13 @@
     "is_climb_comment": "是否使用爬梯 1:是 ,0:否",
     "is_climb": 0,
     "game_map_comment": "填入要打的地圖",
-    "game_map": "寺院通道一",
+    "game_map": "黑肥肥領土",
     "role_speed_sec_px_comment": "角色每秒移動多少px",
     "role_speed_sec_px": 360,
     "main_attack_skill_comment": "主要攻擊技能",
     "main_attack_skill": "a",
     "attack_range_comment": "攻擊範圍設定值攻守:720左右，自己微調",
-    "attack_range": 200,
+    "attack_range": 560,
     "main_skill_keep_time_comment": "主要攻擊技能按壓時間",
     "main_skill_keep_time": 1,
     "is_find_monster_closer_comment": "是否尋找較近的怪物 1:是 0:否",
@@ -23,11 +23,11 @@
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
     "role_prefix_name_comment": "通知DC的角色名稱前綴",
     "role_prefix_name": "同花打得過fullhouse",
-    
+
     "is_runtime_logout_comment": "是否啟用運行時登出（1:是，0:否）",
-    "is_runtime_logout": 1,
+    "is_runtime_logout": 0,
     "max_runtime_sec_comment": "最大運行時間（秒）",
-    "max_runtime_sec": 10,
+    "max_runtime_sec": 3600,
 
     
     "sprite_line": "法師--------------------------------------------------------------------------------",

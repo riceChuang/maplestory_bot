@@ -34,7 +34,7 @@ MONSTERS_PATH = "pic/monsters"
 UNSEAL_TEMPLATE_PATH = "pic/unseal" 
 '''✅ 解輪圖示辨識'''
 ITEMS_PATH = "pic/items"
-THRESHOLD = 0.6
+THRESHOLD = 0.7
 LOCK_TOLERANCE = 50
 
 # ---------- 功能區 ----------
@@ -197,7 +197,7 @@ def monster_still_exist_nearby(frame, target_pos, folder_path=MONSTERS_PATH, tol
             dy = abs(center_y - target_pos[1])
             # print(f"🔍 {os.path.basename(template_path)} 發現目標點 ({center_x}, {center_y})，dx={dx}, dy={dy}")
 
-            if dx < tolerance :
+            if dx < tolerance and dy < tolerance:
                 print(f"✅ {os.path.basename(template_path)} 在原目標附近，維持鎖定")
                 return True  # 提早結束搜尋
 
@@ -267,7 +267,8 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
 def move_to_target(target_pos):
     target_x = target_pos[0]
     print(f"🔍 目標 X 座標：{target_x}")
-    player_pos = find_player(REGION,REGION,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
+    monsterRegion = getMonsterRegion(REGION,target_map[GAME_CONFIG.game_map])
+    player_pos = find_player(REGION,monsterRegion,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
     if not player_pos:
         print("❌ 無法辨識角色位置，請確認模板圖與遊戲狀態")
         return
@@ -294,7 +295,7 @@ def move_to_target(target_pos):
                 pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
         else:
             times = 10
-            duration = min(3, abs(abs(dx)-GAME_CONFIG.attack_range) / GAME_CONFIG.role_speed_sec_px)  # 最長不超過3秒
+            duration = min(1.5, abs(abs(dx)-GAME_CONFIG.attack_range) / GAME_CONFIG.role_speed_sec_px)  # 最長不超過3秒
             timesSec = duration/times
             direction = 'right' if dx > 0 else 'left'
             for i in range(times):
@@ -324,6 +325,7 @@ def move_to_target(target_pos):
         pyautogui.keyUp('left')
     else:
         print("😐 角色已正對怪物")
+    
     
 def attack():
     print("========== 攻擊目標 =========")
