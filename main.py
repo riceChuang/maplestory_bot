@@ -279,7 +279,7 @@ def move_to_target(target_pos):
     if abs(dx) > GAME_CONFIG.attack_range:
         print(f"🚶‍♂️ 角色與目標距離過遠，開始移動，dx={dx}, dy={dy}")
         if GAME_CONFIG.is_use_flash_skill == 1:
-            times = abs(math.ceil(dx / 450))
+            times = abs(math.ceil(dx / GAME_CONFIG.flash_move_px))
             print(f"🚀 使用位移技能，預計次數: {times}")
             direction = 'right' if dx > 0 else 'left'
             for i in range(times):

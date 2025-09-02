@@ -34,6 +34,8 @@
     "loop_action": 0,
     "main_flash_skill_comment": "主要法師閃現技能",
     "main_flash_skill": "f",
+    "flash_move_px_comment": "閃現移動距離（像素）",
+    "flash_move_px": 380,
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
     "is_use_flash_skill": 1
 }

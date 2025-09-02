@@ -19,6 +19,7 @@ class GameConfig:
             self.role_speed_sec_px: float = setting.get('role_speed_sec_px', 300)
         '''每秒移動幾個 pixel，用來計算走到目標點要幾秒'''
 
+
         self.main_attack_skill: str = setting['main_attack_skill']
         '''主要攻擊技能按鍵'''
 
@@ -77,6 +78,8 @@ class GameConfig:
         '''主要閃現技能按鍵'''
         self.is_use_flash_skill = setting.get('is_use_flash_skill', 0)
         '''是否啟用閃現技能（1:是，0:否）'''
+        self.flash_move_px: float = setting.get('flash_move_px', 0)
+        '''閃現移動距離（像素）'''
         self.loop_action = setting.get('loop_action', '')
         '''循環動作設定'''
 
