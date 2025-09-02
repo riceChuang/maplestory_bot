@@ -4,14 +4,12 @@
     "is_climb_comment": "是否使用爬梯 1:是 ,0:否",
     "is_climb": 1,
     "game_map_comment": "填入要打的地圖",
-    "game_map": "時間之路一",
+    "game_map": "巨人之森",
     "role_speed_sec_px_comment": "角色每秒移動多少px",
     "role_speed_sec_px": 360,
     "main_attack_skill_comment": "主要攻擊技能",
     "main_attack_skill": "a",
     "attack_range_comment": "攻擊範圍設定值攻守:720左右，自己微調",
-    "attack_range": 560,
-    "attack_range": 300,
     "attack_range": 720,
     "main_skill_keep_time_comment": "主要攻擊技能按壓時間",
     "main_skill_keep_time": 2,
@@ -24,13 +22,20 @@
     "webhook_url_comment": "訊息通知到DC",
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
     "role_prefix_name_comment": "通知DC的角色名稱前綴",
-    "role_prefix_name": "同花打得過fullhouse",
+    "role_prefix_name": "打我爸爸",
 
     "is_runtime_logout_comment": "是否啟用運行時登出（1:是，0:否）",
     "is_runtime_logout": 0,
     "max_runtime_sec_comment": "最大運行時間（秒）",
     "max_runtime_sec": 3600,
 
+    
+    "is_auto_skill_comment": "是否啟用自動施放技能 1:是 ,0:否",
+    "is_auto_skill": 1,
+    "auto_skill_buttom_comment": "自動施放被動技能按鈕 'a','b','c'",
+    "auto_skill_buttom":"1,2",
+    "auto_skill_interval_comment": "自動施放被動技能間隔 秒數",
+    "auto_skill_interval": 100,
     
     "sprite_line": "法師--------------------------------------------------------------------------------",
     "loop_action": 0,
@@ -39,7 +44,6 @@
     "flash_move_px_comment": "閃現移動距離（像素）",
     "flash_move_px": 380,
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
-    "is_use_flash_skill": 1
     "is_use_flash_skill": 0,
     "is_wizard_comment": "是否為法師 1:是 ,0:否",
     "is_wizard": 0
