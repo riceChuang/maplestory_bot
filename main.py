@@ -267,8 +267,7 @@ def find_and_pick_item(region, folder_path=ITEMS_PATH, threshold=0.7, tolerance=
 def move_to_target(target_pos):
     target_x = target_pos[0]
     print(f"🔍 目標 X 座標：{target_x}")
-    monsterRegion = getMonsterRegion(REGION,target_map[GAME_CONFIG.game_map])
-    player_pos = find_player(REGION,monsterRegion,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
+    player_pos = find_player(REGION,REGION,GAME_CONFIG.is_use_role_pic,SCENE_TEMPLATES)  # 自定義函式，回傳 (x, y)
     if not player_pos:
         print("❌ 無法辨識角色位置，請確認模板圖與遊戲狀態")
         return
