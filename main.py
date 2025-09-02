@@ -523,7 +523,6 @@ def main():
                 MINI_MAP_ENEMY_MGR.reset()
                 AUTO_SKILL_MGR.reset()
                 time.sleep(5)
-                ## only for stone door
                 runAfterChangeChannelAction(target_map[GAME_CONFIG.game_map])
                 changeState(State.ATTACK_ACTION)
             case State.GAME_LOGOUT:

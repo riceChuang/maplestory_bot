@@ -16,7 +16,40 @@ class LadderClimber:
         if len(targets) != 0:
             self.move_towards_target(find_player_in_minimap_fun, targets)
         else:
-            return self.climb_with_photo(player_pos, find_player_in_minimap_fun)
+            self.climb_with_photo(player_pos, find_player_in_minimap_fun)
+
+         # 開始持續攀爬
+        print("🧗 開始攀爬繩索")
+        start_time = time.time()
+        # pyautogui.keyDown('up')
+        last_y = None
+        is_climb_ok = False
+        last_y = None
+        last_change_time = time.time()
+
+        while True:
+            if self.interrupt_callback():
+                print("⛔ 中斷事件發生，停止攀爬")
+                break
+
+            player_pos = find_player_in_minimap_fun()
+            if player_pos:
+                _, now_y = player_pos
+
+                if last_y is None or abs(now_y - last_y) > 2:
+                    last_change_time = time.time()
+                    last_y = now_y
+
+                # 如果座標穩定超過 X 秒才算完成
+                if time.time() - last_change_time > 0.5:  # 例如穩定 1.2 秒
+                    print("✅ 角色 Y 座標穩定，視為已到達")
+                    is_climb_ok = True
+                    break
+            time.sleep(0.1)
+        
+        if is_climb_ok:
+            pyautogui.keyUp('up')
+        return is_climb_ok
 
     def climb_with_photo(self,player_pos, find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]]):
         player_pos = player_pos
@@ -58,38 +91,7 @@ class LadderClimber:
         pyautogui.press('space')  # 跳一下
         pyautogui.keyDown('up')
         pyautogui.keyUp(direction)
-        # 開始持續攀爬
-        print("🧗 開始攀爬繩索")
-        start_time = time.time()
-        # pyautogui.keyDown('up')
-        last_y = None
-        is_climb_ok = False
-        last_y = None
-        last_change_time = time.time()
-
-        while True:
-            if self.interrupt_callback():
-                print("⛔ 中斷事件發生，停止攀爬")
-                break
-
-            player_pos = find_player_in_minimap_fun()
-            if player_pos:
-                _, now_y = player_pos
-
-                if last_y is None or abs(now_y - last_y) > 2:
-                    last_change_time = time.time()
-                    last_y = now_y
-
-                # 如果座標穩定超過 X 秒才算完成
-                if time.time() - last_change_time > 0.5:  # 例如穩定 1.2 秒
-                    print("✅ 角色 Y 座標穩定，視為已到達")
-                    is_climb_ok = True
-                    break
-            time.sleep(0.1)
-        
-        if is_climb_ok:
-            pyautogui.keyUp('up')
-        return is_climb_ok
+       
     
 
     def move_towards_target(self,find_player_in_minimap_fun:Callable[[dict[str, int]], Optional[Tuple[int, int]]], targets):
@@ -121,7 +123,7 @@ class LadderClimber:
             dx = target[0] - player_x
             # 移動 (這裡你可以換成實際的按鍵事件)
             direction = 'right' if dx > 0 else 'left'
-            if abs(dx) <= 5:
+            if abs(dx) <= 3:
                 print(f"✅ 到達目標 {target}")
                 time.sleep(0.05)
                 pyautogui.keyDown('up')
