@@ -511,10 +511,9 @@ def main():
                 else:
                     find_player_in_minimap_callback = partial(MINI_MAP_ENEMY_MGR.get_yellow_dot_pos_in_minmap, 0.7)
                     player_pos = find_player(REGION, REGION, GAME_CONFIG.is_use_role_pic, SCENE_TEMPLATES)
-                    is_climb_ok = FLOOR_MOVEMENT.climb_rope(player_pos,find_player_in_minimap_callback,getClimbTargets(target_map[GAME_CONFIG.game_map]))
-                    if is_climb_ok:
-                        pyautogui.keyUp('up') ## BUG上樓梯完要清除
-                        attack()
+                    FLOOR_MOVEMENT.climb_rope(player_pos,find_player_in_minimap_callback,getClimbTargets(target_map[GAME_CONFIG.game_map]))
+                    pyautogui.keyUp('up') ## BUG上樓梯完要清除
+                    attack()
                     time.sleep(1)
                 changeState(State.ATTACK_ACTION)
             case State.CHANGE_CHANNEL:
