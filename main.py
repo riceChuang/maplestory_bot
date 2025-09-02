@@ -16,7 +16,7 @@ from lib.common import find_player
 from lib.common import find_player_and_center
 from lib.floor_movement import LadderClimber
 from lib.minimap_detector import MinimapEnemyDetector
-from map.map import getClimbTargets, getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getMaxDownY, getTargetMapNameEn, target_map
+from map.map import getClimbTargets, getMaxTopY, getMinimapRegion, getMonsterRegion, getMonsterToleranceY, getTargetMapNameEn, getMaxDownY, getTargetMapNameEn, runAfterChangeChannelAction, target_map
 from map.proess_state import State
 from lib.discord_notifier import DiscordNotifier
 from lib.unseal_detector import UnsealDetector
@@ -525,11 +525,7 @@ def main():
                 AUTO_SKILL_MGR.reset()
                 time.sleep(5)
                 ## only for stone door
-                pyautogui.press('up')
-                time.sleep(0.4)
-                pyautogui.keyDown('right')
-                time.sleep(4)
-                pyautogui.keyUp('right')
+                runAfterChangeChannelAction(target_map[GAME_CONFIG.game_map])
                 changeState(State.ATTACK_ACTION)
             case State.GAME_LOGOUT:
                 UI_CONTRO_MGR.logout()

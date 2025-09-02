@@ -1,5 +1,8 @@
 from enum import Enum, auto
+import time
 from unittest import case
+
+import pyautogui
 
 
 class target_map(Enum):
@@ -155,3 +158,24 @@ def getClimbTargets(target:target_map):
         
         
     return targets
+
+
+def runAfterChangeChannelAction(target: target_map):
+    '''頻道切換後執行的動作'''
+    match target:
+        case target_map.黑森林狩獵場二:
+            # 在這裡添加黑森林狩獵場二的特定行為
+            pass
+        case target_map.時間之路一:
+            pyautogui.keyDown('left')
+            time.sleep(4)
+            pyautogui.keyUp('left')
+            pass
+        case _:
+            pyautogui.press('up')
+            time.sleep(0.4)
+            pyautogui.keyDown('right')
+            time.sleep(4)
+            pyautogui.keyUp('right')
+            # 在這裡添加其他地圖的特定行為
+            pass
