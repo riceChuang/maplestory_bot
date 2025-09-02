@@ -29,6 +29,14 @@
     "max_runtime_sec_comment": "最大運行時間（秒）",
     "max_runtime_sec": 3600,
 
+    "is_auto_skill_comment": "是否啟用自動施放技能 1:是 ,0:否",
+    "is_auto_skill": 0,
+    "auto_skill_buttom_comment": "自動施放被動技能按鈕 'a','b','c'",
+    "auto_skill_buttom":"1",
+    "auto_skill_interval_comment": "自動施放被動技能間隔 秒數",
+    "auto_skill_interval": 100,
+
+
     
     "sprite_line": "法師--------------------------------------------------------------------------------",
     "loop_action": 0,
@@ -37,5 +45,5 @@
     "flash_move_px_comment": "閃現移動距離（像素）",
     "flash_move_px": 380,
     "is_use_flash_skill_comment": "是否使用閃現技能 1:是 ,0:否",
-    "is_use_flash_skill": 1
+    "is_use_flash_skill": 0
 }
