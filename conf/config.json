@@ -22,14 +22,21 @@
     "webhook_url_comment": "訊息通知到DC",
     "webhook_url": "https://discord.com/api/webhooks/1400807943804551268/0yAAg9gvV9iwb0aT4idfWflzObEct6wIAZfgM-wIolipyVSq7Q98k0tmcYx3Hq_MYuz0",
     "role_prefix_name_comment": "通知DC的角色名稱前綴",
-    "role_prefix_name": "同花打得過fullhouse",
+    "role_prefix_name": "超爽撿到一百塊",
 
     "is_runtime_logout_comment": "是否啟用運行時登出（1:是，0:否）",
     "is_runtime_logout": 0,
     "max_runtime_sec_comment": "最大運行時間（秒）",
     "max_runtime_sec": 3600,
 
-    
+       
+    "is_auto_skill_comment": "是否啟用自動施放技能 1:是 ,0:否",
+    "is_auto_skill": 1,
+    "auto_skill_buttom_comment": "自動施放被動技能按鈕 'a','b','c'",
+    "auto_skill_buttom":"1",
+    "auto_skill_interval_comment": "自動施放被動技能間隔 秒數",
+    "auto_skill_interval": 100,
+
     "sprite_line": "法師--------------------------------------------------------------------------------",
     "loop_action": 0,
     "main_flash_skill_comment": "主要法師閃現技能",
