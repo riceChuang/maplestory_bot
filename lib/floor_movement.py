@@ -13,33 +13,32 @@ class LadderClimber:
         self.interrupt_callback = interrupt_callback
     
     def climb_rope(self, player_pos, find_player_in_minimap_fun: Callable[[dict[str, int]], Optional[Tuple[int, int]]], targets):
+        is_move_to_climb = False
         if len(targets) != 0:
-            self.move_towards_target(find_player_in_minimap_fun, targets)
+            is_move_to_climb = self.move_towards_target(find_player_in_minimap_fun, targets)
         else:
-            self.climb_with_photo(player_pos, find_player_in_minimap_fun)
+            is_move_to_climb = self.climb_with_photo(player_pos, find_player_in_minimap_fun)
 
-         # 開始持續攀爬
+        if not is_move_to_climb:
+            print("❌ 攀爬失敗，停止攀爬")
+            return False
+
+        # 開始持續攀爬
         print("🧗 開始攀爬繩索")
-        start_time = time.time()
-        # pyautogui.keyDown('up')
         last_y = None
         is_climb_ok = False
         last_y = None
         last_change_time = time.time()
-
         while True:
             if self.interrupt_callback():
                 print("⛔ 中斷事件發生，停止攀爬")
                 break
-
             player_pos = find_player_in_minimap_fun()
             if player_pos:
                 _, now_y = player_pos
-
                 if last_y is None or abs(now_y - last_y) > 2:
                     last_change_time = time.time()
                     last_y = now_y
-
                 # 如果座標穩定超過 X 秒才算完成
                 if time.time() - last_change_time > 0.5:  # 例如穩定 1.2 秒
                     print("✅ 角色 Y 座標穩定，視為已到達")
@@ -91,6 +90,7 @@ class LadderClimber:
         pyautogui.press('space')  # 跳一下
         pyautogui.keyDown('up')
         pyautogui.keyUp(direction)
+        return True
        
     
 
@@ -104,14 +104,17 @@ class LadderClimber:
         # 到達目標
         isArrive = False
         # 回傳當前玩家座標 (x, y)
-        player_x, player_y = find_player_in_minimap_fun()
+        pos = find_player_in_minimap_fun()
+        if not pos:
+            return False
+        player_x, player_y = pos
         #  Y軸允許的差距
         y_tolerance = 5
         # 篩選出符合Y軸條件的目標
         valid_targets = [t for t in targets if abs(t[1] - player_y) <= y_tolerance]
         if not valid_targets:
             print("❌ 沒有符合條件的目標")
-            return None
+            return False
         # 找出X軸最近的
         target = min(valid_targets, key=lambda t: abs(t[0] - player_x))
         print(f"🎯 選中目標: {target}")
@@ -141,7 +144,7 @@ class LadderClimber:
             if isArrive:
                 pyautogui.keyUp('right')
                 pyautogui.keyUp('left')
-                return
+                return True
            
             print(f"👉 向 {direction} 移動")
             pyautogui.keyDown(direction)
