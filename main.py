@@ -381,21 +381,23 @@ def loopAction():
         for i in range(times):
             if interruptEVent():
                 pyautogui.keyUp(direction[0])
-                pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
-                pyautogui.keyUp(GAME_CONFIG.main_attack_skill)
-                return
+                pyautogui.keyUp(GameConfig.main_flash_skill)
+                pyautogui.keyUp(GameConfig.main_attack_skill) 
+                return 'change_channel'
             tempdirection = direction[0]
             if i % 5 == 0:
                 tempdirection = anotherDirection(direction[0])
                 
             print("========== 攻擊目標 =========")
-            pyautogui.keyDown(GAME_CONFIG.main_flash_skill)
+            pyautogui.keyDown(GameConfig.main_flash_skill)
+            pyautogui.keyDown(GameConfig.main_attack_skill)
             pyautogui.keyDown(tempdirection)
             time.sleep(0.2)  
             pyautogui.keyUp(tempdirection)
-            pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
+            pyautogui.keyUp(GameConfig.main_flash_skill)
             time.sleep(0.6)
-        pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
+            pyautogui.keyUp(GameConfig.main_attack_skill)
+        
 
 def anotherDirection(direction):
     if direction == 'left':
@@ -481,9 +483,12 @@ def main():
             case State.INIT:
                 changeState(State.ATTACK_ACTION)
             case State.ATTACK_ACTION:
-                if loopAction == 1:
-                    loopAction()
-                    changeState(State.ATTACK_ACTION)
+                if GAME_CONFIG.loop_action == 1:
+                    endState = loopAction()
+                    if endState is None:
+                        changeState(State.ATTACK_ACTION)                        
+                    elif endState == 'change_channel':
+                        changeState(State.CHANGE_CHANNEL)
                 else:
                     print("🔍 尋找怪物...")
                     endState =  attacAction()
