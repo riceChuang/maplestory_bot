@@ -129,7 +129,7 @@ class UnsealDetector:
                 now = time.time()
 
                 # 通知頻率控制：距離上次通知超過 3 秒才通知
-                if now - last_notify_time >= 3:
+                if now - last_notify_time >= 10:
                     if self.send_discord:
                         self.dc_notifier.send('⚠️ 偵測到解輪圖示，請立即處理')
                         last_notify_time = now

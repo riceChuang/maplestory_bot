@@ -97,7 +97,7 @@ def getMaxTopY(target:target_map):
     max_y = 40
     match target:
         case target_map.巨人之森:
-            max_y = 185  
+            max_y = 185
         case target_map.CD:
             max_y = 40
         case target_map.黑森林狩獵場二:
@@ -155,7 +155,8 @@ def getClimbTargets(target:target_map):
             targets = [(54,61),(149,61),(44,82),(150,103),(97,131),(40,152),(202,173),(141,173),(114,173),(80,173)]            
         case target_map.時間之路一:
             targets = [(54,146),(124,146),(89,115),(23,115),(55,86)]
-        
+        case target_map.巨人之森:
+            targets = [(95,214),(176,214)]
         
     return targets
 

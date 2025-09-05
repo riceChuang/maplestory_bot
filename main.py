@@ -464,7 +464,7 @@ def changeState(STATE:State):
         NOTIFIER_MGR.send('❗️ 偵測到經驗停止，切換頻道')
         GAME_STATE = State.CHANGE_CHANNEL
     elif UNSEAL_MGR.is_unseal_detected() and GAME_CONFIG.is_unseal_change_channel == 1:
-        GAME_STATE = State.CHANGE_CHANNEL
+        GAME_STATE = State.GAME_LOGOUT
     elif (MINI_MAP_ENEMY_MGR.is_enemy_detected() and GAME_CONFIG.is_enemey_change_channel == 1):
         GAME_STATE = State.CHANGE_CHANNEL
     elif MINI_MAP_ENEMY_MGR.is_stuck():
