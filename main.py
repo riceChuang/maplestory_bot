@@ -381,22 +381,22 @@ def loopAction():
         for i in range(times):
             if interruptEVent():
                 pyautogui.keyUp(direction[0])
-                pyautogui.keyUp(GameConfig.main_flash_skill)
-                pyautogui.keyUp(GameConfig.main_attack_skill) 
+                pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
+                pyautogui.keyUp(GAME_CONFIG.main_attack_skill) 
                 return 'change_channel'
             tempdirection = direction[0]
             if i % 5 == 0:
                 tempdirection = anotherDirection(direction[0])
                 
             print("========== 攻擊目標 =========")
-            pyautogui.keyDown(GameConfig.main_flash_skill)
-            pyautogui.keyDown(GameConfig.main_attack_skill)
+            pyautogui.keyDown(GAME_CONFIG.main_flash_skill)
+            pyautogui.keyDown(GAME_CONFIG.main_attack_skill)
             pyautogui.keyDown(tempdirection)
             time.sleep(0.2)  
             pyautogui.keyUp(tempdirection)
-            pyautogui.keyUp(GameConfig.main_flash_skill)
+            pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
             time.sleep(0.6)
-            pyautogui.keyUp(GameConfig.main_attack_skill)
+            pyautogui.keyUp(GAME_CONFIG.main_attack_skill)
         
 
 def anotherDirection(direction):
