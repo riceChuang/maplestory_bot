@@ -105,7 +105,7 @@ class LadderClimber:
         isArrive = False
         # 回傳當前玩家座標 (x, y)
         pos = find_player_in_minimap_fun()
-        if not pos:
+        if pos is None:
             return False
         player_x, player_y = pos
         #  Y軸允許的差距
