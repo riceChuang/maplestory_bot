@@ -169,7 +169,7 @@ def getClimbTargets(target:target_map):
         case target_map.巨人之森:
             targets = [(95,214),(176,214)]
         case target_map.軍一:
-            targets = [(68,135),(125,172),(125,168),(65,214),(65,218),(65,221)]
+            targets = [(68,132),(68,133),(124,163),(124,168),(64,217),(64,218)]
         
     return targets
 

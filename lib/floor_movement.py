@@ -133,7 +133,7 @@ class LadderClimber:
                 time.sleep(0.05)
                 pyautogui.press('space')  # 跳一下
                 isArrive = True
-            elif abs(dx) <= 15:
+            elif abs(dx) <= 10:
                 print(f"✅ 到達目標 {target}")
                 time.sleep(0.05)
                 pyautogui.keyDown('up')
