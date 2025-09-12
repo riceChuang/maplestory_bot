@@ -16,6 +16,7 @@ class target_map(Enum):
     石人寺院門外 = auto()
     空屋 = auto()
     時間之路一 = auto()
+    軍一 = auto()
 
 def getTargetMapNameEn(target:target_map):
     '''取得怪物圖片路徑'''
@@ -40,6 +41,8 @@ def getTargetMapNameEn(target:target_map):
             path = 'Empty_House'
         case target_map.時間之路一:
             path = 'Time_Road_One'
+        case target_map.軍一:
+            path = 'Army_One'
     return path
 
 def getMinimapRegion(region,target:target_map):
@@ -64,6 +67,8 @@ def getMinimapRegion(region,target:target_map):
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 235, 'height': 157}
         case target_map.時間之路一:
             minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 227, 'height': 174}
+        case target_map.軍一:
+            minimap_region =  {'left': region['left'] + 17, 'top': region['top'] + 158, 'width': 186, 'height': 245}
 
     return minimap_region
 
@@ -88,6 +93,8 @@ def getMonsterRegion(region,target:target_map):
         case target_map.空屋:
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 394, 'width': region['width'], 'height': 400}
         case target_map.時間之路一:
+            minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 387, 'width': region['width'], 'height': 450}
+        case target_map.軍一:
             minimap_region =  {'left': region['left'] + 0, 'top': region['top'] + 387, 'width': region['width'], 'height': 450}
 
     return minimap_region
@@ -114,6 +121,8 @@ def getMaxTopY(target:target_map):
             max_y = 112
         case target_map.時間之路一:
             max_y = 69
+        case target_map.軍一:
+            max_y = 175
     return max_y
 
 def getMaxDownY(target:target_map):
@@ -145,6 +154,8 @@ def getMonsterToleranceY(target:target_map):
             toleranceY = 200
         case target_map.時間之路一:
             toleranceY = 197
+        case target_map.軍一:
+            toleranceY = 170
     return toleranceY
 
 def getClimbTargets(target:target_map):
@@ -157,6 +168,8 @@ def getClimbTargets(target:target_map):
             targets = [(54,146),(124,146),(89,115),(23,115),(55,86)]
         case target_map.巨人之森:
             targets = [(95,214),(176,214)]
+        case target_map.軍一:
+            targets = [(68,135),(125,172),(125,168),(65,214),(65,218),(65,221)]
         
     return targets
 

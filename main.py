@@ -383,7 +383,7 @@ def loopAction():
                 pyautogui.keyUp(direction[0])
                 pyautogui.keyUp(GAME_CONFIG.main_flash_skill)
                 pyautogui.keyUp(GAME_CONFIG.main_attack_skill) 
-                return 'change_channel'
+                return
             tempdirection = direction[0]
             if i % 5 == 0:
                 tempdirection = anotherDirection(direction[0])
@@ -485,10 +485,7 @@ def main():
             case State.ATTACK_ACTION:
                 if GAME_CONFIG.loop_action == 1:
                     endState = loopAction()
-                    if endState is None:
-                        changeState(State.ATTACK_ACTION)                        
-                    elif endState == 'change_channel':
-                        changeState(State.CHANGE_CHANNEL)
+                    changeState(State.ATTACK_ACTION)                        
                 else:
                     print("🔍 尋找怪物...")
                     endState =  attacAction()
@@ -533,7 +530,7 @@ def main():
             case State.GAME_LOGOUT:
                 UI_CONTRO_MGR.logout()
                 NOTIFIER_MGR.send('===== 休息時間到了，登出並停止運行 =====')
-                sys.exit()
+                os._exit(0) 
 
 # ---------- 執行 ----------
 if __name__ == "__main__":
