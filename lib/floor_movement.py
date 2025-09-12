@@ -105,7 +105,8 @@ class LadderClimber:
         isArrive = False
         # 回傳當前玩家座標 (x, y)
         pos = find_player_in_minimap_fun()
-        if pos is None:
+        if not pos:
+            print("❌ 無法取得玩家座標")
             return False
         player_x, player_y = pos
         #  Y軸允許的差距
@@ -119,7 +120,13 @@ class LadderClimber:
         target = min(valid_targets, key=lambda t: abs(t[0] - player_x))
         print(f"🎯 選中目標: {target}")
         while True:
-            player_x, player_y = find_player_in_minimap_fun()
+            pos = find_player_in_minimap_fun()
+            if not pos:
+                print("❌ 無法取得玩家座標 (移動中斷)")
+                pyautogui.keyUp('right')
+                pyautogui.keyUp('left')
+                return False
+            player_x, player_y = pos
             print(f"🧍 玩家當前位置: ({player_x}, {player_y})")
 
             # 判斷是否已經到達
@@ -145,7 +152,7 @@ class LadderClimber:
                 pyautogui.keyUp('right')
                 pyautogui.keyUp('left')
                 return True
-           
+
             print(f"👉 向 {direction} 移動")
             pyautogui.keyDown(direction)
             time.sleep(0.1)
